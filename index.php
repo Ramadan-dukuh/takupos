@@ -1,3 +1,6 @@
+<?php
+include "koneksi.php";
+?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -76,104 +79,30 @@
 <div class="katalog">
     <div class="rekomendasi">Celana</div>
     <div class="rekomendasi">Baju</div>
-    <div class="rekomendasi">Earphone</div>
-    <div class="rekomendasi">Mirip yang kamu cek</div>
+    <div class="rekomendasi">Dress</div>
+    <div class="rekomendasi">Sepatu</div>
 </div>
 <div class="etalase">
+    <?php
+    $query = "SELECT * FROM produk";
+    $result = $kon->query($query);
+    ?>
+<?php while($row = $result->fetch_assoc()) { ?>
     <div class="produk" id="produk">
         <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
+        <h3><?= $row['nama_produk'] ?></h3>
+        <h4>Rp<?= number_format($row['harga_produk'], 0, ',', '.') ?></h4>
     </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk"     id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    <div class="produk" id="produk">
-        <img src="img/bg.png" alt="">
-        <h3>baju</h3>
-        <h4>Rp100.000</h4>        
-        <h5>kota</h5>
-        <p>rating</p>
-    </div>
-    
+    <?php } ?>
 </div>
 <div class="btn-memuat">
-    <a href="">Tampilkan Lebih banyak</a>
+    <a href="">Tambah Produk</a>
 </div>
 <hr>
 <footer>
     <div class="footer-container">
         <div class="footer-section about">
-            <h5>KiShop</h5>
+            <h5>TakuPos</h5>
             <p>Hak Kekayaan Intelektual<br>
             Karir<br>
             Blog</p>
@@ -190,7 +119,7 @@
             <h5>Ikuti Kami</h5>
             <ul class="social-icon">
                 <li>
-                    <a href="https://uks.kemdikbud.go.id/sekolah-sehat" class="link">
+                    <a href="" class="link">
                         <i class='bx bx-link-alt'></i>
                     </a>
                 </li>
@@ -200,7 +129,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="https://youtu.be/MdZ5cLCvEio?si=0f4lNk7f9irEhSeX" class="youtube">
+                    <a href="" class="youtube">
                         <i class='bx bxl-youtube'></i>
                     </a>
                 </li>
@@ -216,7 +145,7 @@
     <div class="footer-divider"></div>
     
     <div class="copyright">
-        <p>&copy; Copyright 2025 | KiShop</p>
+        <p>&copy; Copyright 2025 | TakuPos</p>
     </div>
 </footer>
 </body>

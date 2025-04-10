@@ -3,16 +3,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style/produk.css">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="img/logotakupos2.png" type="image/x-icon">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="script.js"></script>
-    <title>KiShop</title>
+    <title>Produk</title>
 </head>
 <body>
     <nav>
-        <a href="#" class="logo">KiShop</a>
+        <a href="index.html" class="logo">TakuPos</a>
         
         <div class="nav-center">
             <div class="kategori">
@@ -28,7 +28,7 @@
             
             <div class="search-box">
                 <i class="uil uil-search search-icon"></i>
-                <input type="text" placeholder="Cari produk di KiShop..." />
+                <input type="text" placeholder="Cari produk disini..." />
             </div>
         </div>
         
@@ -87,16 +87,11 @@
                     
                     <div class="option-title">Pilih ukuran: 3XL</div>
                     <div class="size-options">
-                        <div class="size-option">12XL</div>
-                        <div class="size-option">11XL</div>
-                        <div class="size-option">10XL</div>
-                        <div class="size-option">9XL</div>
-                        <div class="size-option">8XL</div>
-                        <div class="size-option">7XL</div>
-                        <div class="size-option">6XL</div>
-                        <div class="size-option">5XL</div>
-                        <div class="size-option">4XL</div>
-                        <div class="size-option active">3XL</div>
+                        <div class="size-option">S</div>
+                        <div class="size-option">M</div>
+                        <div class="size-option">L</div>
+                        <div class="size-option">XL</div>
+                        <div class="size-option active">XXL</div>                        
                     </div>
                 </div>
             </div>
@@ -107,12 +102,12 @@
             <h3 class="purchase-box-title">Atur jumlah dan catatan</h3>
             <div class="selected-variant">
                 <img src="img/Rectangle_40[1].png" alt="Hitam, 3XL" class="variant-img">
-                <span class="variant-name">Hitam, 3XL</span>
+                <span class="variant-name">Hitam, xXL</span>
             </div>
             <div class="quantity-selector">
-                <button class="qty-btn">-</button>
-                <input type="text" value="1" class="qty-input">
-                <button class="qty-btn">+</button>
+                <button class="qty-btn" id="minusBtn">-</button>
+                <input type="text" value="1" min="1" class="qty-input">
+                <button class="qty-btn" id="plusBtn">+</button>
                 <span class="stock-info">Stok: 200</span>
             </div>
             <div class="subtotal">
@@ -121,22 +116,9 @@
             </div>
             <div class="action-buttons">
                 <button class="btn btn-outlined">+ Keranjang</button>
-                <button class="btn btn-primary">Beli Langsung</button>
+                <button class="btn btn-primary">Beli</button>
             </div>
-            <div class="action-links">
-                <a href="#" class="action-link">
-                    <i class="fas fa-comment"></i>
-                    <span>Chat</span>
-                </a>
-                <a href="#" class="action-link">
-                    <i class="fas fa-heart"></i>
-                    <span>Wishlist</span>
-                </a>
-                <a href="#" class="action-link">
-                    <i class="fas fa-share-alt"></i>
-                    <span>Share</span>
-                </a>
-            </div>
+         
         </div>
         
         <!-- Product details tab -->
@@ -164,7 +146,7 @@
     <footer>
         <div class="footer-container">
             <div class="footer-section about">
-                <h5>KiShop</h5>
+                <h5>TakuPos</h5>
                 <p>Hak Kekayaan Intelektual<br>
                 Karir<br>
                 Blog</p>
@@ -217,17 +199,19 @@
             const plusBtn = document.querySelector('.qty-btn:last-child');
             const qtyInput = document.querySelector('.qty-input');
             
-            // minusBtn.addEventListener('click', function() {
-            //     let qty = parseInt(qtyInput.value);
-            //     if (qty > 1) {
-            //         qtyInput.value = qty - 1;
-            //     }
-            // });
+            minusBtn.addEventListener('click', function() {
+                let qty = parseInt(qtyInput.value);
+                if (qty > 1) {
+                    qtyInput.value = qty - 1;
+                }
+            });
             
-            // plusBtn.addEventListener('click', function() {
-            //     let qty = parseInt(qtyInput.value);
-            //     qtyInput.value = qty + 1;
-            // });
+            plusBtn.addEventListener('click', function() {
+                let qty = parseInt(qtyInput.value);
+                if (qty > 1) {
+                    qtyInput.value = qty - 1;
+                }
+            });
             
             // Size options
             const sizeOptions = document.querySelectorAll('.size-option');
