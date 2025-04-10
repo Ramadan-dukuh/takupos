@@ -1,8 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
 
 :root {
-  --primary-color: #ff604a;
-  --secondary-color: #10121c;
+  --primary-color: #4D0E0E;
+  --secondary-color: #EEAB3C;
   --tertiary-color: #fefff2;
   --accent-color: #ff8f7d;
   --text-color: #333333;
@@ -582,7 +582,7 @@ nav .logo {
 
 
 footer {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-color);
     padding: 40px 0 20px;
     width: 100%;
     color: var(--tertiary-color);
@@ -609,7 +609,7 @@ footer {
     font-size: 16px;
     margin-bottom: 15px;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     letter-spacing: 1px;
   }
   
