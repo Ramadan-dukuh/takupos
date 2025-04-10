@@ -1,110 +1,198 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // Select slider elements
-    const slider = document.querySelector('.slider');
-    const slides = document.querySelectorAll('.slide');
-    const prevBtn = document.querySelector('.prev-btn');
-    const nextBtn = document.querySelector('.next-btn');
-    const dotsContainer = document.querySelector('.slider-dots');
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle sidebar
+    const toggleSidebar = document.querySelector('.toggle-sidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
     
-    // Set up initial state
-    let currentIndex = 0;
-    let slideInterval;
-    const slideWidth = 100; // 100% of container width
-    const autoSlideDelay = 5000; // 5 seconds between slides
-    
-    // Create dots for navigation
-    slides.forEach((_, index) => {
-        const dot = document.createElement('div');
-        dot.classList.add('dot');
-        if (index === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => goToSlide(index));
-        dotsContainer.appendChild(dot);
-    });
-    
-    const dots = document.querySelectorAll('.dot');
-    
-    // Function to go to a specific slide
-    function goToSlide(index) {
-        // Handle edge cases
-        if (index < 0) index = slides.length - 1;
-        if (index >= slides.length) index = 0;
-        
-        currentIndex = index;
-        slider.style.transform = `translateX(-${slideWidth * currentIndex}%)`;
-        
-        // Update active dot
-        dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentIndex);
+    if (toggleSidebar) {
+        toggleSidebar.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            if (sidebar.classList.contains('active')) {
+                mainContent.style.marginLeft = '0';
+            } else {
+                mainContent.style.marginLeft = 'var(--sidebar-width)';
+            }
         });
     }
     
-    // Event listeners for buttons
-    prevBtn.addEventListener('click', () => {
-        resetInterval();
-        goToSlide(currentIndex - 1);
-    });
-    
-    nextBtn.addEventListener('click', () => {
-        resetInterval();
-        goToSlide(currentIndex + 1);
-    });
-    
-    // Touch events for swipe functionality
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    slider.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-    
-    slider.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    });
-    
-    function handleSwipe() {
-        const swipeThreshold = 50;
-        if (touchStartX - touchEndX > swipeThreshold) {
-            // Swipe left, go to next slide
-            resetInterval();
-            goToSlide(currentIndex + 1);
-        } else if (touchEndX - touchStartX > swipeThreshold) {
-            // Swipe right, go to previous slide
-            resetInterval();
-            goToSlide(currentIndex - 1);
+    // Responsive sidebar
+    function checkScreenSize() {
+        if (window.innerWidth <= 768) {
+            sidebar.classList.remove('active');
+            mainContent.style.marginLeft = '0';
+        } else {
+            sidebar.classList.add('active');
+            mainContent.style.marginLeft = 'var(--sidebar-width)';
         }
     }
     
-    // Auto slide functionality
-    function startAutoSlide() {
-        slideInterval = setInterval(() => {
-            goToSlide(currentIndex + 1);
-        }, autoSlideDelay);
-    }
+    // Check on load
+    checkScreenSize();
     
-    function resetInterval() {
-        clearInterval(slideInterval);
-        startAutoSlide();
-    }
+    // Check on resize
+    window.addEventListener('resize', checkScreenSize);
     
-    // Mouse enter/leave events to pause/resume auto slide
-    const sliderContainer = document.querySelector('.slider-container');
-    sliderContainer.addEventListener('mouseenter', () => {
-        clearInterval(slideInterval);
-    });
-    
-    sliderContainer.addEventListener('mouseleave', () => {
-        startAutoSlide();
-    });
-    
-    // Start the auto slider
-    startAutoSlide();
-
-    
-    const produk = document.querySelectorAll('.produk');
-    produk.forEach((produk) => {
-        produk.addEventListener('click', () => {
-            window.location.href = 'produk.html';
+    // Dropdown menu for admin profile
+    const adminProfile = document.querySelector('.admin-profile');
+    if (adminProfile) {
+        adminProfile.addEventListener('click', function() {
+            // Toggle dropdown menu
+            const dropdown = document.querySelector('.profile-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
         });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        const isClickInsideProfile = adminProfile && adminProfile.contains(event.target);
+        const dropdown = document.querySelector('.profile-dropdown');
+        
+        if (dropdown && !isClickInsideProfile && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Product card animations
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        });
+    });
+    
+    // Notifications toggle
+    const notificationIcon = document.querySelector('.notification');
+    if (notificationIcon) {
+        notificationIcon.addEventListener('click', function() {
+            // Toggle notifications panel
+            const notificationsPanel = document.querySelector('.notifications-panel');
+            if (notificationsPanel) {
+                notificationsPanel.classList.toggle('show');
+            }
+        });
+    }
+    
+    // Table row actions
+    const actionButtons = document.querySelectorAll('.action-buttons .btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const action = this.classList.contains('view-btn') ? 'view' : 
+                          this.classList.contains('edit-btn') ? 'edit' : 'delete';
+            
+            const row = this.closest('tr');
+            const orderId = row.querySelector('td:first-child').textContent;
+            
+            if (action === 'view') {
+                // View order details
+                console.log('Viewing order:', orderId);
+                // Redirect to view page or show modal
+                // window.location.href = `view-order.php?id=${orderId.replace('#', '')}`;
+            } else if (action === 'edit') {
+                // Edit order
+                console.log('Editing order:', orderId);
+                // Redirect to edit page or show modal
+                // window.location.href = `edit-order.php?id=${orderId.replace('#', '')}`;
+            } else {
+                // Delete confirmation
+                if (confirm(`Apakah Anda yakin ingin menghapus pesanan ${orderId}?`)) {
+                    console.log('Deleting order:', orderId);
+                    // Send AJAX request to delete
+                }
+            }
+        });
+    });
+    
+    // Product card actions
+    const productActionButtons = document.querySelectorAll('.product-actions .btn');
+    productActionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const action = this.classList.contains('edit-btn') ? 'edit' : 'delete';
+            
+            const card = this.closest('.product-card');
+            const productName = card.querySelector('h4').textContent;
+            
+            if (action === 'edit') {
+                // Edit product
+                console.log('Editing product:', productName);
+                // Redirect to edit page
+                // window.location.href = `edit-product.php?id=${productId}`;
+            } else {
+                // Delete confirmation
+                if (confirm(`Apakah Anda yakin ingin menghapus produk "${productName}"?`)) {
+                    console.log('Deleting product:', productName);
+                    // Send AJAX request to delete
+                    // After success, remove the card with animation
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                    }, 300);
+                }
+            }
+        });
+    });
+    
+    // Add click event for Add Product button
+    const addProductBtn = document.querySelector('.add-btn');
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', function() {
+            window.location.href = 'tambah-produk.php';
+        });
+    }
+    
+    // Implement quick stats counter animation
+    const statValues = document.querySelectorAll('.stat-value');
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            
+            // Format value if it's a currency
+            if (element.textContent.includes('Rp')) {
+                element.textContent = 'Rp' + value.toLocaleString('id-ID');
+            } else {
+                element.textContent = value;
+            }
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    // Observe when stats are in viewport
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                let endValue;
+                
+                // Parse the end value
+                if (element.textContent.includes('Rp')) {
+                    endValue = parseInt(element.textContent.replace(/[^0-9]/g, ''));
+                } else {
+                    endValue = parseInt(element.textContent);
+                }
+                
+                animateValue(element, 0, endValue, 1000);
+                observer.unobserve(element);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    statValues.forEach(value => {
+        observer.observe(value);
     });
 });
