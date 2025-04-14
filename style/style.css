@@ -2,12 +2,10 @@
 
 :root {
   /* Main color scheme */
-  --primary-color: #4D0E0E;
+  --primary-color: #E91A48;
   --primary-light: rgba(77, 14, 14, 0.1);
-  --primary-dark: #3c0b0b;
-  --secondary-color: #EEAB3C;
-  --secondary-light: #f4c05f;
-  --secondary-dark: #d99b35;
+  --primary-dark: #A71740;
+  --secondary-color: #FFDEDE;
   --tertiary-color: #fefff2;
   
   /* UI colors */
@@ -119,13 +117,13 @@ ul {
   text-align: center;
 }
 
-.logo {
+/* .logo {
   font-size: 26px;
   font-weight: 700;
   color: var(--tertiary-color);
   margin-bottom: 5px;
   letter-spacing: 0.5px;
-}
+} */
 
 .subtitle {
   font-size: 12px;

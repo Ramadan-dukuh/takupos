@@ -40,18 +40,18 @@ $total_customer = $count_row['total'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style/style.css">
-    <link rel="shortcut icon" href="img/logotakupos2.png" type="image/x-icon">
+    <link rel="shortcut icon" href="img/logo busana-1.png" type="image/x-icon">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="script.js" defer></script>
-    <title>TakuPos - Web Management</title>
+    <title>Fashion24 - Web Management</title>
 </head>
 <body>
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h1 class="logo">TakuPos</h1>
+                <h1 class="logo"><img src="img/logo busana-2.png" alt=""></h1>
                 <span class="subtitle">Management Panel</span>
             </div>
             
