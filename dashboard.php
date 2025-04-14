@@ -20,18 +20,18 @@ $count_row = $count_result->fetch_assoc();
 $total_customer = $count_row['total'];
 
 //get all pendapatan
-$sql = "SELECT SUM(dt.jumlah * p.harga_produk) AS total_pendapatan
-        FROM detail_transaksi dt
-        JOIN produk p ON dt.id_produk = p.id_produk";
+// $sql = "SELECT SUM(dt.jumlah * p.harga_produk) AS total_pendapatan
+//         FROM detail_transaksi dt
+//         JOIN produk p ON dt.id_produk = p.id_produk";
 
-$result = $kon->query($sql);
+// $result = $kon->query($sql);
 // Cek apakah hasil query berhasil
-if ($result && $result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $total_pendapatan = $row['total_pendapatan'] ?? 0;
-} else {
-    $total_pendapatan = 0;
-}
+// if ($result && $result->num_rows > 0) {
+//     $row = $result->fetch_assoc();
+//     $total_pendapatan = $row['total_pendapatan'] ?? 0;
+// } else {
+//     $total_pendapatan = 0;
+// }
 
 ?>
 <!DOCTYPE html>

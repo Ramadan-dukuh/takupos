@@ -4,7 +4,7 @@ include "koneksi.php";
 // Handle Product Deletion
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $product_id = $_GET['delete'];
-    $delete_query = "DELETE FROM produk WHERE id_produk = $product_id";
+    $delete_query = "DELETE FROM produk WHERE id = $product_id";
     
     if ($kon->query($delete_query) === TRUE) {
         $success_message = "Produk berhasil dihapus!";
@@ -22,7 +22,7 @@ $offset = ($page - 1) * $limit;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $search_condition = '';
 if (!empty($search)) {
-    $search_condition = "WHERE nama_produk LIKE '%$search%' OR gambar_produk LIKE '%$search%'";
+    $search_condition = "WHERE nama LIKE '%$search%' OR gambar LIKE '%$search%'";
 }
 
 // Get total products count for pagination
@@ -33,7 +33,7 @@ $total_products = $count_row['total'];
 $total_pages = ceil($total_products / $limit);
 
 // Get products with pagination
-$query = "SELECT * FROM produk $search_condition ORDER BY id_produk DESC LIMIT $offset, $limit";
+$query = "SELECT * FROM produk $search_condition ORDER BY id DESC LIMIT $offset, $limit";
 $result = $kon->query($query);
 ?>
 
@@ -241,17 +241,17 @@ $result = $kon->query($query);
                                 <?php while($row = $result->fetch_assoc()): ?>
                                 <div class="product-card">
                                     <div class="product-img">
-                                        <img src="<?= !empty($row['gambar_produk']) ? $row['gambar_produk'] : 'img/bg.png' ?>" alt="<?= $row['nama_produk'] ?>">
+                                        <img src="<?= !empty($row['gambar']) ? $row['gambar'] : 'img/bg.png' ?>" alt="<?= $row['nama_produk'] ?>">
                                     </div>
                                     <div class="product-info">
-                                        <h4><?= $row['nama_produk'] ?></h4>
-                                        <p class="product-price">Rp<?= number_format($row['harga_produk'], 0, ',', '.') ?></p>
+                                        <h4><?= $row['nama'] ?></h4>
+                                        <p class="product-price">Rp<?= number_format($row['harga'], 0, ',', '.') ?></p>
                                         <p class="product-stock">Stok: <?= isset($row['stock']) ? $row['stock'] : 0 ?></p>
                                         <div class="product-actions">
-                                            <a href="edit-produk.php?id=<?= $row['id_produk'] ?>" class="btn edit-btn">
+                                            <a href="edit-produk.php?id=<?= $row['id'] ?>" class="btn edit-btn">
                                                 <i class="uil uil-edit"></i> Edit
                                             </a>
-                                            <a href="produk.php?delete=<?= $row['id_produk'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                                            <a href="produk.php?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
                                                 <i class="uil uil-trash-alt"></i> Hapus
                                             </a>
                                         </div>

@@ -3,17 +3,17 @@ include "koneksi.php";
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nama_produk = $_POST['nama_produk'];
-    $harga_produk = $_POST['harga_produk'];
+    $nama_produk = $_POST['nama'];
+    $harga_produk = $_POST['harga'];
     $stok_produk = $_POST['stok_produk'];
-    $kategori_id = $_POST['kategori_id'];
+    $kategori_id = $_POST['id_kategori'];
     $deskripsi_produk = $_POST['deskripsi_produk'];
     
     // Handle file upload
     $gambar_produk = '';
-    if(isset($_FILES['gambar_produk']) && $_FILES['gambar_produk']['error'] == 0) {
+    if(isset($_FILES['gambar']) && $_FILES['gambar']['error'] == 0) {
         $target_dir = "img/produk/";
-        $file_extension = pathinfo($_FILES["gambar_produk"]["name"], PATHINFO_EXTENSION);
+        $file_extension = pathinfo($_FILES["gambar"]["name"], PATHINFO_EXTENSION);
         $new_filename = uniqid() . '.' . $file_extension;
         $target_file = $target_dir . $new_filename;
         
@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             mkdir($target_dir, 0777, true);
         }
         
-        if (move_uploaded_file($_FILES["gambar_produk"]["tmp_name"], $target_file)) {
+        if (move_uploaded_file($_FILES["gambar"]["tmp_name"], $target_file)) {
             $gambar_produk = $target_file;
         } else {
             $upload_error = "Gagal mengunggah gambar produk.";
@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get categories for dropdown
-$kategori_query = "SELECT * FROM kategori ORDER BY nama_kategori";
+$kategori_query = "SELECT * FROM kategori ORDER BY nama";
 $kategori_result = $kon->query($kategori_query);
 ?>
 
@@ -288,7 +288,7 @@ $kategori_result = $kon->query($kategori_query);
                                         <?php else: ?>
                                             <option value="1">Celana</option>
                                             <option value="2">Baju</option>
-                                            <option value="3">Dress</option>
+                                            <option value="3">Dress</option>                                            
                                             <option value="4">Sepatu</option>
                                         <?php endif; ?>
                                     </select>
@@ -297,28 +297,35 @@ $kategori_result = $kon->query($kategori_query);
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="harga">Harga</label>
-                                    <input type="number" id="harga" name="harga" class="form-control" required>
+                                    <label for="harga_produk">Harga (Rp)</label>
+                                    <input type="number" id="harga_produk" name="harga_produk" class="form-control" required>
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="stok">Stok</label>
-                                    <input type="number" id="stok" name="stok" class="form-control" required>
+                                    <label for="stok_produk">Stok</label>
+                                    <input type="number" id="stok_produk" name="stok_produk" class="form-control" required>
                                 </div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="deskripsi">Deskripsi</label>
-                                <textarea id="deskripsi" name="deskripsi" class="form-control" required></textarea>
+                                <label for="gambar_produk">Gambar Produk</label>
+                                <div class="image-preview" id="imagePreview">
+                                    <div class="image-preview-text">
+                                        <i class="uil uil-image-upload" style="font-size: 40px;"></i>
+                                        <p>Pilih gambar produk</p>
+                                    </div>
+                                </div>
+                                <input type="file" id="gambar_produk" name="gambar_produk" class="form-control" accept="image/*">
                             </div>
                             
                             <div class="form-group">
-                                <label for="gambar">Gambar</label>
-                                <input type="file" id="gambar" name="gambar" class="form-control" required>
+                                <label for="deskripsi_produk">Deskripsi Produk</label>
+                                <textarea id="deskripsi_produk" name="deskripsi_produk" class="form-control"></textarea>
                             </div>
                             
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary">Tambah Produk</button>
+                            <div class="btn-container">
+                                <a href="produk.php" class="btn secondary-btn">Batal</a>
+                                <button type="submit" class="btn primary-btn">Simpan Produk</button>
                             </div>
                         </form>
                     </div>
@@ -326,7 +333,45 @@ $kategori_result = $kon->query($kategori_query);
             </div>
         </main>
     </div>
-
-    <script src="js/script.js"></script>
+    
+    <script>
+        // Image preview script
+        const imageInput = document.getElementById('gambar_produk');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewText = imagePreview.querySelector('.image-preview-text');
+        
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                previewText.style.display = "none";
+                
+                reader.addEventListener('load', function() {
+                    const img = document.createElement('img');
+                    img.src = this.result;
+                    
+                    // Remove any previous preview
+                    while (imagePreview.firstChild) {
+                        imagePreview.removeChild(imagePreview.firstChild);
+                    }
+                    
+                    imagePreview.appendChild(img);
+                });
+                
+                reader.readAsDataURL(file);
+            } else {
+                previewText.style.display = "flex";
+                
+                // Remove any previous preview
+                while (imagePreview.firstChild) {
+                    if (imagePreview.firstChild.className === 'image-preview-text') {
+                        break;
+                    }
+                    imagePreview.removeChild(imagePreview.firstChild);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
