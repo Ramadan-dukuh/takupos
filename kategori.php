@@ -6,17 +6,17 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $kategori_id = $_GET['delete'];
     
     // Check if category is used by any product
-    $check_query = "SELECT COUNT(*) as total FROM produk WHERE id_kategori = $kategori_id";
+    $check_query = "SELECT COUNT(*) as total FROM products WHERE category_id = $kategori_id";
     $check_result = $kon->query($check_query);
     $check_row = $check_result->fetch_assoc();
     
     if ($check_row['total'] > 0) {
-        $error_message = "Kategori tidak dapat dihapus karena masih digunakan oleh {$check_row['total']} produk.";
+        $error_message = "Category cannot be deleted because it is still used by {$check_row['total']} products.";
     } else {
-        $delete_query = "DELETE FROM kategori WHERE id = $kategori_id";
+        $delete_query = "DELETE FROM categories WHERE id = $kategori_id";
         
         if ($kon->query($delete_query) === TRUE) {
-            $success_message = "Kategori berhasil dihapus!";
+            $success_message = "Category successfully deleted!";
         } else {
             $error_message = "Error: " . $kon->error;
         }
@@ -29,17 +29,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_kategori'])) {
     $deskripsi_kategori = $_POST['deskripsi_kategori'];
     
     // Check if category already exists
-    $check_query = "SELECT COUNT(*) as total FROM kategori WHERE nama = '$nama_kategori'";
+    $check_query = "SELECT COUNT(*) as total FROM categories WHERE name = '$nama_kategori'";
     $check_result = $kon->query($check_query);
     $check_row = $check_result->fetch_assoc();
     
     if ($check_row['total'] > 0) {
-        $error_message = "Kategori dengan nama tersebut sudah ada.";
+        $error_message = "Category with this name already exists.";
     } else {
-        $insert_query = "INSERT INTO kategori (nama) VALUES ('$nama_kategori')";
+        $insert_query = "INSERT INTO categories (name) VALUES ('$nama_kategori')";
         
         if ($kon->query($insert_query) === TRUE) {
-            $success_message = "Kategori baru berhasil ditambahkan!";
+            $success_message = "New category successfully added!";
         } else {
             $error_message = "Error: " . $kon->error;
         }
@@ -52,11 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_kategori'])) {
     $nama_kategori = $_POST['nama'];
     $deskripsi_kategori = $_POST['deskripsi_kategori'];
     
-    $update_query = "UPDATE kategori SET nama = '$nama_kategori' 
+    $update_query = "UPDATE categories SET name = '$nama_kategori' 
                     WHERE id = $kategori_id";
     
     if ($kon->query($update_query) === TRUE) {
-        $success_message = "Kategori berhasil diperbarui!";
+        $success_message = "Category successfully updated!";
     } else {
         $error_message = "Error: " . $kon->error;
     }
@@ -71,23 +71,38 @@ $offset = ($page - 1) * $limit;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $search_condition = '';
 if (!empty($search)) {
-    $search_condition = "WHERE nama LIKE '%$search%' ";
+    $search_condition = "WHERE name LIKE '%$search%' ";
 }
 
 // Get total categories count for pagination
-$count_query = "SELECT COUNT(*) as total FROM kategori $search_condition";
+$count_query = "SELECT COUNT(*) as total FROM categories $search_condition";
 $count_result = $kon->query($count_query);
 $count_row = $count_result->fetch_assoc();
 $total_categories = $count_row['total'];
 $total_pages = ceil($total_categories / $limit);
 
 // Get categories with pagination
-$query = "SELECT k.*, COUNT(p.id) as product_count 
-          FROM kategori k
-          LEFT JOIN produk p ON k.id = p.id
-          $search_condition
-          GROUP BY k.id
-          ORDER BY k.id DESC LIMIT $offset, $limit";
+$query = "SELECT 
+    c.*,
+    (
+        SELECT COUNT(*) 
+        FROM products p 
+        WHERE p.category_id = c.id
+    ) AS product_count,
+    (
+        SELECT COALESCE(SUM(pv.stock), 0)
+        FROM products p
+        LEFT JOIN product_variants pv ON p.id = pv.product_id
+        WHERE p.category_id = c.id
+    ) AS total_stock
+FROM 
+    categories c
+$search_condition
+ORDER BY 
+    c.id ASC
+LIMIT 
+    $offset, $limit
+";
 $result = $kon->query($query);
 ?>
 
@@ -101,7 +116,7 @@ $result = $kon->query($query);
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="script.js" defer></script>
-    <title>Manajemen Kategori - Fashion24</title>
+    <title>Category Management - Fashion24</title>
 </head>
 <body>
     <div class="container">
@@ -122,37 +137,37 @@ $result = $kon->query($query);
                 <li class="menu-item">
                     <a href="produk.php">
                         <i class="uil uil-shopping-bag"></i>
-                        <span>Produk</span>
+                        <span>Products</span>
                     </a>
                 </li>
                 <li class="menu-item active">
                     <a href="kategori.php">
                         <i class="uil uil-tag-alt"></i>
-                        <span>Kategori</span>
+                        <span>Categories</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pesanan.php">
                         <i class="uil uil-shopping-cart"></i>
-                        <span>Pesanan</span>
+                        <span>Orders</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pelanggan.php">
                         <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                        <span>Customers</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="laporan.php">
                         <i class="uil uil-chart"></i>
-                        <span>Laporan</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pengaturan.php">
                         <i class="uil uil-setting"></i>
-                        <span>Pengaturan</span>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>
@@ -176,7 +191,7 @@ $result = $kon->query($query);
                 <div class="search-box">
                     <form action="" method="GET">
                         <i class="uil uil-search search-icon"></i>
-                        <input type="text" name="search" placeholder="Cari kategori..." value="<?= htmlspecialchars($search) ?>" />
+                        <input type="text" name="search" placeholder="Search categories..." value="<?= htmlspecialchars($search) ?>" />
                     </form>
                 </div>
                 
@@ -197,9 +212,9 @@ $result = $kon->query($query);
             <!-- Category Management Content -->
             <div class="dashboard">
                 <div class="page-header">
-                    <h2 class="page-title">Manajemen Kategori</h2>
+                    <h2 class="page-title">Category Management</h2>
                     <button class="btn primary-btn" id="showAddCategoryModal">
-                        <i class="uil uil-plus"></i> Tambah Kategori Baru
+                        <i class="uil uil-plus"></i> Add New Category
                     </button>
                 </div>
                 
@@ -219,9 +234,9 @@ $result = $kon->query($query);
                 
                 <div class="content-card">
                     <div class="card-header">
-                        <h3>Daftar Kategori</h3>
+                        <h3>Category List</h3>
                         <div class="header-actions">
-                            <span class="product-count"><?= $total_categories ?> Kategori</span>
+                            <span class="product-count"><?= $total_categories ?> Categories</span>
                         </div>
                     </div>
                     
@@ -232,32 +247,28 @@ $result = $kon->query($query);
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Nama Kategori</th> 
-                                            <th>Deskripsi</th>                                           
-                                            <th>Jumlah Produk</th>
-                                            <th>Aksi</th>
+                                            <th>Category Name</th> 
+                                            <th>Description</th>                                           
+                                            <th>Product Count</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php while($row = $result->fetch_assoc()): ?>
                                         <tr>
                                             <td><?= $row['id'] ?></td>
-                                            <td><?= $row['nama'] ?></td>
-                                            <td><?= !empty($row['deskripsi_kategori']) ? $row['deskripsi_kategori'] : '<em>Tidak ada deskripsi</em>' ?></td>
-                                            <td>
-                                                <span class="badge <?= $row['product_count'] > 0 ? 'success-badge' : 'neutral-badge' ?>">
-                                                    <?= $row['product_count'] ?> Produk
-                                                </span>
-                                            </td>
+                                            <td><?= $row['name'] ?></td>
+                                            <td><?= !empty($row['description']) ? $row['description'] : '<em>No description</em>' ?></td>
+                                            <td><?= $row['total_stock'] ?></td>                                            
                                             <td class="action-buttons">
                                                 <button class="btn edit-btn edit-category-btn" 
                                                         data-id="<?= $row['id'] ?>" 
-                                                        data-name="<?= htmlspecialchars($row['nama']) ?>"                                                         
+                                                        data-name="<?= htmlspecialchars($row['name']) ?>"                                                         
                                                     <i class="uil uil-edit"></i> Edit
                                                 </button>
-                                                <a href="kategori.php?delete=<?= $row['id'] ?>" class="btn delete-btn <?= $row['product_count'] > 0 ? 'disabled' : '' ?>" 
-                                                   onclick="return <?= $row['product_count'] > 0 ? 'alert(\'Kategori tidak dapat dihapus karena masih digunakan oleh produk.\'); false' : 'confirm(\'Apakah Anda yakin ingin menghapus kategori ini?\')' ?>;">
-                                                    <i class="uil uil-trash-alt"></i> Hapus
+                                                <a href="kategori.php?delete=<?= $row['id'] ?>" class="btn delete-btn <?= $row['total_stock'] > 0 ? 'disabled' : '' ?>" 
+                                                   onclick="return <?= $row['total_stock'] > 0 ? 'alert(\'Category cannot be deleted because it is still used by products.\'); false' : 'confirm(\'Are you sure you want to delete this category?\')' ?>;">
+                                                    <i class="uil uil-trash-alt"></i> Delete
                                                 </a>
                                             </td>
                                         </tr>
@@ -271,7 +282,7 @@ $result = $kon->query($query);
                             <div class="pagination">
                                 <?php if($page > 1): ?>
                                 <a href="?page=<?= ($page - 1) ?><?= !empty($search) ? '&search='.$search : '' ?>" class="pagination-btn prev">
-                                    <i class="uil uil-angle-left"></i> Sebelumnya
+                                    <i class="uil uil-angle-left"></i> Previous
                                 </a>
                                 <?php endif; ?>
                                 
@@ -285,7 +296,7 @@ $result = $kon->query($query);
                                 
                                 <?php if($page < $total_pages): ?>
                                 <a href="?page=<?= ($page + 1) ?><?= !empty($search) ? '&search='.$search : '' ?>" class="pagination-btn next">
-                                    Berikutnya <i class="uil uil-angle-right"></i>
+                                    Next <i class="uil uil-angle-right"></i>
                                 </a>
                                 <?php endif; ?>
                             </div>
@@ -295,11 +306,11 @@ $result = $kon->query($query);
                             <div class="no-data">
                                 <i class="uil uil-tag"></i>
                                 <?php if(!empty($search)): ?>
-                                <p>Tidak ditemukan kategori dengan kata kunci "<?= htmlspecialchars($search) ?>"</p>
-                                <a href="kategori.php" class="btn secondary-btn">Tampilkan Semua Kategori</a>
+                                <p>No categories found with keyword "<?= htmlspecialchars($search) ?>"</p>
+                                <a href="kategori.php" class="btn secondary-btn">Show All Categories</a>
                                 <?php else: ?>
-                                <p>Belum ada kategori ditambahkan</p>
-                                <button class="btn add-btn" id="showAddCategoryModalEmpty">Tambah Kategori</button>
+                                <p>No categories added yet</p>
+                                <button class="btn add-btn" id="showAddCategoryModalEmpty">Add Category</button>
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
@@ -313,25 +324,25 @@ $result = $kon->query($query);
     <div class="modal" id="addCategoryModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Tambah Kategori Baru</h3>
+                <h3>Add New Category</h3>
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form action="" method="POST">
                     <div class="form-group">
-                        <label for="nama_kategori">Nama Kategori</label>
+                        <label for="nama_kategori">Category Name</label>
                         <input type="text" id="nama_kategori" name="nama_kategori" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="deskripsi_kategori">Deskripsi (Opsional)</label>
+                        <label for="deskripsi_kategori">Description (Optional)</label>
                         <textarea id="deskripsi_kategori" name="deskripsi_kategori" class="form-control"></textarea>
                     </div>
                     
                     <div class="btn-container">
                         <input type="hidden" name="add_kategori" value="1">
-                        <button type="button" class="btn secondary-btn cancel-modal">Batal</button>
-                        <button type="submit" class="btn primary-btn">Simpan Kategori</button>
+                        <button type="button" class="btn secondary-btn cancel-modal">Cancel</button>
+                        <button type="submit" class="btn primary-btn">Save Category</button>
                     </div>
                 </form>
             </div>
@@ -342,26 +353,26 @@ $result = $kon->query($query);
     <div class="modal" id="editCategoryModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Edit Kategori</h3>
+                <h3>Edit Category</h3>
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form action="" method="POST">
                     <div class="form-group">
-                        <label for="edit_nama_kategori">Nama Kategori</label>
+                        <label for="edit_nama_kategori">Category Name</label>
                         <input type="text" id="edit_nama_kategori" name="nama_kategori" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit_deskripsi_kategori">Deskripsi (Opsional)</label>
+                        <label for="edit_deskripsi_kategori">Description (Optional)</label>
                         <textarea id="edit_deskripsi_kategori" name="deskripsi_kategori" class="form-control"></textarea>
                     </div>
                     
                     <div class="btn-container">
                         <input type="hidden" name="kategori_id" id="edit_kategori_id">
                         <input type="hidden" name="edit_kategori" value="1">
-                        <button type="button" class="btn secondary-btn cancel-modal">Batal</button>
-                        <button type="submit" class="btn primary-btn">Perbarui Kategori</button>
+                        <button type="button" class="btn secondary-btn cancel-modal">Cancel</button>
+                        <button type="submit" class="btn primary-btn">Update Category</button>
                     </div>
                 </form>
             </div>
@@ -382,12 +393,14 @@ $result = $kon->query($query);
         if (showAddCategoryModal) {
             showAddCategoryModal.addEventListener('click', function() {
                 addCategoryModal.style.display = 'flex';
+                addCategoryModal.style.zIndex = '100';
             });
         }
         
         if (showAddCategoryModalEmpty) {
             showAddCategoryModalEmpty.addEventListener('click', function() {
                 addCategoryModal.style.display = 'flex';
+                addCategoryModal.style.zIndex = '100';
             });
         }
         

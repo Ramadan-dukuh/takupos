@@ -4,7 +4,7 @@ include "koneksi.php";
 // Handle Product Deletion
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $product_id = $_GET['delete'];
-    $delete_query = "DELETE FROM produk WHERE id = $product_id";
+    $delete_query = "DELETE FROM products WHERE id = $product_id";
     
     if ($kon->query($delete_query) === TRUE) {
         $success_message = "Produk berhasil dihapus!";
@@ -22,18 +22,18 @@ $offset = ($page - 1) * $limit;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $search_condition = '';
 if (!empty($search)) {
-    $search_condition = "WHERE nama LIKE '%$search%' OR gambar LIKE '%$search%'";
+    $search_condition = "WHERE name LIKE '%$search%' OR image LIKE '%$search%'";
 }
 
 // Get total products count for pagination
-$count_query = "SELECT COUNT(*) as total FROM produk $search_condition";
+$count_query = "SELECT COUNT(*) as total FROM products $search_condition";
 $count_result = $kon->query($count_query);
 $count_row = $count_result->fetch_assoc();
 $total_products = $count_row['total'];
 $total_pages = ceil($total_products / $limit);
 
 // Get products with pagination
-$query = "SELECT * FROM produk $search_condition ORDER BY id DESC LIMIT $offset, $limit";
+$query = "SELECT * FROM products $search_condition ORDER BY id DESC LIMIT $offset, $limit";
 $result = $kon->query($query);
 ?>
 
@@ -90,8 +90,8 @@ $result = $kon->query($query);
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+ <!-- Sidebar -->
+ <aside class="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo"><img src="img/logo busana-2.png" alt=""></h1>
                 <span class="subtitle">Management Panel</span>
@@ -107,37 +107,37 @@ $result = $kon->query($query);
                 <li class="menu-item active">
                     <a href="produk.php">
                         <i class="uil uil-shopping-bag"></i>
-                        <span>Produk</span>
+                        <span>Products</span>
                     </a>
                 </li>
-                <li class="menu-item">
+                <li class="menu-item ">
                     <a href="kategori.php">
                         <i class="uil uil-tag-alt"></i>
-                        <span>Kategori</span>
+                        <span>Categories</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pesanan.php">
                         <i class="uil uil-shopping-cart"></i>
-                        <span>Pesanan</span>
+                        <span>Orders</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pelanggan.php">
                         <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                        <span>Customers</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="laporan.php">
                         <i class="uil uil-chart"></i>
-                        <span>Laporan</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pengaturan.php">
                         <i class="uil uil-setting"></i>
-                        <span>Pengaturan</span>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>
@@ -161,7 +161,7 @@ $result = $kon->query($query);
                 <div class="search-box">
                     <form action="" method="GET">
                         <i class="uil uil-search search-icon"></i>
-                        <input type="text" name="search" placeholder="Cari produk..." value="<?= htmlspecialchars($search) ?>" />
+                        <input type="text" name="search" placeholder="Search products..." value="<?= htmlspecialchars($search) ?>" />
                     </form>
                 </div>
                 
@@ -182,9 +182,9 @@ $result = $kon->query($query);
             <!-- Product Management Content -->
             <div class="dashboard">
                 <div class="page-header">
-                    <h2 class="page-title">Manajemen Produk</h2>
+                    <h2 class="page-title">Management Products</h2>
                     <a href="addproduk.php" class="btn primary-btn">
-                        <i class="uil uil-plus"></i> Tambah Produk Baru
+                        <i class="uil uil-plus"></i> Add New Product
                     </a>
                 </div>
                 
@@ -204,9 +204,9 @@ $result = $kon->query($query);
                 
                 <div class="product-filters">
                     <div class="filter-group">
-                        <label for="category">Kategori:</label>
+                        <label for="category">Caregories:</label>
                         <select id="category" name="category">
-                            <option value="">Semua Kategori</option>
+                            <option value="">All Caregories</option>
                             <option value="1">Celana</option>
                             <option value="2">Baju</option>
                             <option value="3">Dress</option>
@@ -215,23 +215,23 @@ $result = $kon->query($query);
                     </div>
                     
                     <div class="filter-group">
-                        <label for="sort">Urutkan:</label>
+                        <label for="sort">Sort By:</label>
                         <select id="sort" name="sort">
-                            <option value="newest">Terbaru</option>
-                            <option value="oldest">Terlama</option>
-                            <option value="price_high">Harga Tertinggi</option>
-                            <option value="price_low">Harga Terendah</option>
-                            <option value="name_asc">Nama A-Z</option>
-                            <option value="name_desc">Nama Z-A</option>
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Latest</option>
+                            <option value="price_high">High Price</option>
+                            <option value="price_low">Low Price</option>
+                            <option value="name_asc">From A-Z</option>
+                            <option value="name_desc">From Z-A</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="content-card">
                     <div class="card-header">
-                        <h3>Daftar Produk</h3>
+                        <h3>Product List</h3>
                         <div class="header-actions">
-                            <span class="product-count"><?= $total_products ?> Produk</span>
+                            <span class="product-count"><?= $total_products ?> Products</span>
                         </div>
                     </div>
                     
@@ -241,18 +241,18 @@ $result = $kon->query($query);
                                 <?php while($row = $result->fetch_assoc()): ?>
                                 <div class="product-card">
                                     <div class="product-img">
-                                        <img src="<?= !empty($row['gambar']) ? $row['gambar'] : 'img/bg.png' ?>" alt="<?= $row['nama_produk'] ?>">
+                                        <img src="<?= !empty($row['image']) ? $row['image'] : 'img/bg.png' ?>" alt="<?= $row['product_name'] ?>">
                                     </div>
                                     <div class="product-info">
-                                        <h4><?= $row['nama'] ?></h4>
-                                        <p class="product-price">Rp<?= number_format($row['harga'], 0, ',', '.') ?></p>
+                                        <h4><?= $row['name'] ?></h4>
+                                        <p class="product-price">Rp<?= number_format($row['price'], 0, ',', '.') ?></p>
                                         <p class="product-stock">Stok: <?= isset($row['stock']) ? $row['stock'] : 0 ?></p>
                                         <div class="product-actions">
                                             <a href="edit-produk.php?id=<?= $row['id'] ?>" class="btn edit-btn">
                                                 <i class="uil uil-edit"></i> Edit
                                             </a>
                                             <a href="produk.php?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
-                                                <i class="uil uil-trash-alt"></i> Hapus
+                                                <i class="uil uil-trash-alt"></i> Delete
                                             </a>
                                         </div>
                                     </div>

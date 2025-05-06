@@ -5,54 +5,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.querySelector('.main-content');
     
     if (toggleSidebar) {
-        toggleSidebar.addEventListener('click', function() {
+        toggleSidebar.addEventListener('click', function () {
             sidebar.classList.toggle('active');
-            if (sidebar.classList.contains('active')) {
-                mainContent.style.marginLeft = '0';
-            } else {
-                mainContent.style.marginLeft = 'var(--sidebar-width)';
-            }
-        });
+            mainContent.style.marginLeft = sidebar.classList.contains('active') ? '0' : 'var(--sidebar-width)';
+        });        
     }
     
     // Responsive sidebar
     function checkScreenSize() {
         if (window.innerWidth <= 768) {
-            sidebar.classList.remove('active');
+            sidebar.classList.add('active');
             mainContent.style.marginLeft = '0';
         } else {
-            sidebar.classList.add('active');
+            sidebar.classList.remove('active');
             mainContent.style.marginLeft = 'var(--sidebar-width)';
         }
     }
     
     // Check on load
-    checkScreenSize();
-    
-    // Check on resize
-    window.addEventListener('resize', checkScreenSize);
+    if (sidebar && mainContent) {
+        checkScreenSize();
+        
+        // Check on resize
+        window.addEventListener('resize', checkScreenSize);
+    }
     
     // Dropdown menu for admin profile
     const adminProfile = document.querySelector('.admin-profile');
-    if (adminProfile) {
-        adminProfile.addEventListener('click', function() {
+    const dropdown = document.querySelector('.profile-dropdown');
+    
+    if (adminProfile && dropdown) {
+        adminProfile.addEventListener('click', function(event) {
             // Toggle dropdown menu
-            const dropdown = document.querySelector('.profile-dropdown');
-            if (dropdown) {
-                dropdown.classList.toggle('show');
+            dropdown.classList.toggle('show');
+            event.stopPropagation();
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const isClickInsideProfile = adminProfile.contains(event.target);
+            
+            if (!isClickInsideProfile && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
             }
         });
     }
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(event) {
-        const isClickInsideProfile = adminProfile && adminProfile.contains(event.target);
-        const dropdown = document.querySelector('.profile-dropdown');
-        
-        if (dropdown && !isClickInsideProfile && dropdown.classList.contains('show')) {
-            dropdown.classList.remove('show');
-        }
-    });
     
     // Product card animations
     const productCards = document.querySelectorAll('.product-card');
@@ -70,12 +67,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Notifications toggle
     const notificationIcon = document.querySelector('.notification');
-    if (notificationIcon) {
-        notificationIcon.addEventListener('click', function() {
+    const notificationsPanel = document.querySelector('.notifications-panel');
+    
+    if (notificationIcon && notificationsPanel) {
+        notificationIcon.addEventListener('click', function(event) {
             // Toggle notifications panel
-            const notificationsPanel = document.querySelector('.notifications-panel');
-            if (notificationsPanel) {
-                notificationsPanel.classList.toggle('show');
+            notificationsPanel.classList.toggle('show');
+            event.stopPropagation();
+        });
+        
+        // Close notification panel when clicking outside
+        document.addEventListener('click', function(event) {
+            const isClickInsideNotification = notificationIcon.contains(event.target);
+            
+            if (!isClickInsideNotification && notificationsPanel.classList.contains('show')) {
+                notificationsPanel.classList.remove('show');
             }
         });
     }
@@ -89,18 +95,23 @@ document.addEventListener('DOMContentLoaded', function() {
                           this.classList.contains('edit-btn') ? 'edit' : 'delete';
             
             const row = this.closest('tr');
-            const orderId = row.querySelector('td:first-child').textContent;
+            if (!row) return;
+            
+            const orderIdCell = row.querySelector('td:first-child');
+            if (!orderIdCell) return;
+            
+            const orderId = orderIdCell.textContent;
             
             if (action === 'view') {
                 // View order details
                 console.log('Viewing order:', orderId);
                 // Redirect to view page or show modal
-                // window.location.href = `view-order.php?id=${orderId.replace('#', '')}`;
+                window.location.href = `view-order.php?id=${orderId.replace('#', '')}`;
             } else if (action === 'edit') {
                 // Edit order
                 console.log('Editing order:', orderId);
                 // Redirect to edit page or show modal
-                // window.location.href = `edit-order.php?id=${orderId.replace('#', '')}`;
+                window.location.href = `edit-order.php?id=${orderId.replace('#', '')}`;
             } else {
                 // Delete confirmation
                 if (confirm(`Apakah Anda yakin ingin menghapus pesanan ${orderId}?`)) {
@@ -119,19 +130,57 @@ document.addEventListener('DOMContentLoaded', function() {
             const action = this.classList.contains('edit-btn') ? 'edit' : 'delete';
             
             const card = this.closest('.product-card');
-            const productName = card.querySelector('h4').textContent;
+            if (!card) return;
+            
+            const productNameEl = card.querySelector('h4');
+            if (!productNameEl) return;
+            
+            const productName = productNameEl.textContent;
+            const productId = card.dataset.productId; // Assuming you add data-product-id attribute
             
             if (action === 'edit') {
                 // Edit product
                 console.log('Editing product:', productName);
                 // Redirect to edit page
-                // window.location.href = `edit-product.php?id=${productId}`;
+                if (productId) {
+                    window.location.href = `edit-product.php?id=${productId}`;
+                }
             } else {
                 // Delete confirmation
                 if (confirm(`Apakah Anda yakin ingin menghapus produk "${productName}"?`)) {
                     console.log('Deleting product:', productName);
+                    
                     // Send AJAX request to delete
-                    // After success, remove the card with animation
+                    // Example AJAX request (commented out)
+          
+                    fetch('delete-product.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            product_id: productId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // After success, remove the card with animation
+                            card.style.opacity = '0';
+                            setTimeout(() => {
+                                card.remove();
+                            }, 300);
+                        } else {
+                            alert('Gagal menghapus produk: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan saat menghapus produk');
+                    });
+        
+                    
+                    // For now, just animate and remove
                     card.style.opacity = '0';
                     setTimeout(() => {
                         card.remove();
@@ -152,6 +201,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Implement quick stats counter animation
     const statValues = document.querySelectorAll('.stat-value');
     function animateValue(element, start, end, duration) {
+        if (!element) return;
+        
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
@@ -172,27 +223,34 @@ document.addEventListener('DOMContentLoaded', function() {
         window.requestAnimationFrame(step);
     }
     
-    // Observe when stats are in viewport
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const element = entry.target;
-                let endValue;
-                
-                // Parse the end value
-                if (element.textContent.includes('Rp')) {
-                    endValue = parseInt(element.textContent.replace(/[^0-9]/g, ''));
-                } else {
-                    endValue = parseInt(element.textContent);
+    // Only set up observer if we have stat values
+    if (statValues.length > 0 && 'IntersectionObserver' in window) {
+        // Observe when stats are in viewport
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const element = entry.target;
+                    let endValue;
+                    
+                    // Parse the end value
+                    if (element.textContent.includes('Rp')) {
+                        endValue = parseInt(element.textContent.replace(/[^0-9]/g, ''));
+                    } else {
+                        endValue = parseInt(element.textContent);
+                    }
+                    
+                    // Make sure endValue is a valid number
+                    if (!isNaN(endValue)) {
+                        animateValue(element, 0, endValue, 1000);
+                    }
+                    observer.unobserve(element);
                 }
-                
-                animateValue(element, 0, endValue, 1000);
-                observer.unobserve(element);
-            }
+            });
+        }, { threshold: 0.5 });
+        
+        statValues.forEach(value => {
+            observer.observe(value);
         });
-    }, { threshold: 0.5 });
-    
-    statValues.forEach(value => {
-        observer.observe(value);
-    });
+    }
 });
+

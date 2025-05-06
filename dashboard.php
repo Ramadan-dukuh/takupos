@@ -1,38 +1,117 @@
 <?php
 include 'koneksi.php';
 
-// get all product
-$count_query = "SELECT COUNT(*) as total FROM produk";
+function getSalesData($kon) {
+    $data = array();
+    
+    // Today's sales
+    $today_query = "SELECT 
+                    COUNT(DISTINCT t.id) as sales, 
+                    SUM(td.quantity * p.price) AS revenue
+                FROM transactions t
+                JOIN transaction_details td ON t.id = td.transaction_id
+                JOIN products p ON td.product_variant_id = p.id
+                WHERE DATE(t.created_at) = CURDATE()";
+    $today_result = $kon->query($today_query);
+    $today_data = $today_result->fetch_assoc();
+    $data['Today'] = array(
+        'sales' => $today_data['sales'] ?? 0,
+        'revenue' => $today_data['revenue'] ?? 0
+    );
+    
+    // Yesterday's sales
+    $yesterday_query = "SELECT 
+                        COUNT(DISTINCT t.id) as sales, 
+                        SUM(td.quantity * p.price) AS revenue
+                    FROM transactions t
+                    JOIN transaction_details td ON t.id = td.transaction_id
+                    JOIN products p ON td.product_variant_id = p.id
+                    WHERE DATE(t.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
+    $yesterday_result = $kon->query($yesterday_query);
+    $yesterday_data = $yesterday_result->fetch_assoc();
+    $data['Yesterday'] = array(
+        'sales' => $yesterday_data['sales'] ?? 0,
+        'revenue' => $yesterday_data['revenue'] ?? 0
+    );
+    
+    // Last week's sales (last 7 days)
+    $last_week_query = "SELECT 
+                        COUNT(DISTINCT t.id) as sales, 
+                        SUM(td.quantity * p.price) AS revenue
+                    FROM transactions t
+                    JOIN transaction_details td ON t.id = td.transaction_id
+                    JOIN products p ON td.product_variant_id = p.id
+                    WHERE t.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                    AND t.created_at < CURDATE()";
+    $last_week_result = $kon->query($last_week_query);
+    $last_week_data = $last_week_result->fetch_assoc();
+    $data['Last Week'] = array(
+        'sales' => $last_week_data['sales'] ?? 0,
+        'revenue' => $last_week_data['revenue'] ?? 0
+    );
+    
+    // Last month's sales
+    $last_month_query = "SELECT 
+                        COUNT(DISTINCT t.id) as sales, 
+                        SUM(td.quantity * p.price) AS revenue
+                    FROM transactions t
+                    JOIN transaction_details td ON t.id = td.transaction_id
+                    JOIN products p ON td.product_variant_id = p.id
+                    WHERE t.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    AND t.created_at < CURDATE()";
+    $last_month_result = $kon->query($last_month_query);
+    $last_month_data = $last_month_result->fetch_assoc();
+    $data['Last Month'] = array(
+        'sales' => $last_month_data['sales'] ?? 0,
+        'revenue' => $last_month_data['revenue'] ?? 0
+    );
+    
+    return $data;
+}
+
+// Get sales data
+$salesData = getSalesData($kon);
+
+// Convert to JSON for JavaScript
+$salesDataJSON = json_encode(array_map(function($key, $value) {
+    return array(
+        'name' => $key,
+        'sales' => (int)$value['sales'],
+        'revenue' => (float)$value['revenue']
+    );
+}, array_keys($salesData), array_values($salesData)));
+
+// get all products
+$count_query = "SELECT COUNT(*) as total FROM products";
 $count_result = $kon->query($count_query);
 $count_row = $count_result->fetch_assoc();
 $total_products = $count_row['total'];
 
-//get all transaksi
-$count_query = "SELECT COUNT(*) as total FROM transaksi";
+// get all transactions
+$count_query = "SELECT COUNT(*) as total FROM transactions";
 $count_result = $kon->query($count_query);
 $count_row = $count_result->fetch_assoc();
-$total_transaction = $count_row['total'];
+$total_transactions = $count_row['total'];
 
-//get all pelanggan
-$count_query = "SELECT COUNT(*) as total FROM user ";
+// get all customers
+$count_query = "SELECT COUNT(*) as total FROM users";
 $count_result = $kon->query($count_query);
 $count_row = $count_result->fetch_assoc();
-$total_customer = $count_row['total'];
+$total_customers = $count_row['total'];
 
-//get all pendapatan
-// $sql = "SELECT SUM(dt.jumlah * p.harga_produk) AS total_pendapatan
-//         FROM detail_transaksi dt
-//         JOIN produk p ON dt.id_produk = p.id_produk";
+// get total revenue
+$sql = "SELECT SUM(td.quantity * p.price) AS total_revenue
+        FROM transaction_details td
+        JOIN products p ON td.product_variant_id = p.id";
 
-// $result = $kon->query($sql);
-// Cek apakah hasil query berhasil
-// if ($result && $result->num_rows > 0) {
-//     $row = $result->fetch_assoc();
-//     $total_pendapatan = $row['total_pendapatan'] ?? 0;
-// } else {
-//     $total_pendapatan = 0;
-// }
-
+$result = $kon->query($sql);
+// Check if query was successful
+if ($result && $result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $total_revenue = $row['total_revenue'] ?? 0;
+} else {
+    $total_revenue = 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,13 +122,14 @@ $total_customer = $count_row['total'];
     <link rel="shortcut icon" href="img/logo busana-1.png" type="image/x-icon">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js" defer></script>
     <title>Fashion24 - Web Management</title>
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <div class="container">  
+ <!-- Sidebar -->
+ <aside class="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo"><img src="img/logo busana-2.png" alt=""></h1>
                 <span class="subtitle">Management Panel</span>
@@ -65,37 +145,37 @@ $total_customer = $count_row['total'];
                 <li class="menu-item">
                     <a href="produk.php">
                         <i class="uil uil-shopping-bag"></i>
-                        <span>Produk</span>
+                        <span>Products</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="kategori.php">
                         <i class="uil uil-tag-alt"></i>
-                        <span>Kategori</span>
+                        <span>Categories</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pesanan.php">
                         <i class="uil uil-shopping-cart"></i>
-                        <span>Pesanan</span>
+                        <span>Orders</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pelanggan.php">
                         <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                        <span>Customers</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="laporan.php">
                         <i class="uil uil-chart"></i>
-                        <span>Laporan</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pengaturan.php">
                         <i class="uil uil-setting"></i>
-                        <span>Pengaturan</span>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>
@@ -107,7 +187,6 @@ $total_customer = $count_row['total'];
                 </a>
             </div>
         </aside>
-        
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Navbar -->
@@ -118,7 +197,7 @@ $total_customer = $count_row['total'];
                 
                 <div class="search-box">
                     <i class="uil uil-search search-icon"></i>
-                    <input type="text" placeholder="Cari..." />
+                    <input type="text" placeholder="Search..." />
                 </div>
                 
                 <div class="nav-actions">
@@ -146,9 +225,8 @@ $total_customer = $count_row['total'];
                             <i class="uil uil-shopping-cart"></i>
                         </div>
                         <div class="stat-details">
-                            <h3>Total Pesanan</h3>
-                            <p class="stat-value"><?= $total_transaction ?></p>
-                            <p class="stat-change positive">+12.5% <span>dari bulan lalu</span></p>
+                            <h3>Total Transaction</h3>
+                            <p class="stat-value"><?= $total_transactions ?></p>                            
                         </div>
                     </div>
                     
@@ -157,9 +235,8 @@ $total_customer = $count_row['total'];
                             <i class="uil uil-money-bill"></i>
                         </div>
                         <div class="stat-details">
-                            <h3>Pendapatan</h3>
-                            <p class="stat-value">Rp <?= $total_pendapatan ?></p>
-                            <p class="stat-change positive">+8.3% <span>dari bulan lalu</span></p>
+                            <h3>Income</h3>
+                            <p class="stat-value">Rp <?= $total_pendapatan ?></p>                            
                         </div>
                     </div>
                     
@@ -168,9 +245,8 @@ $total_customer = $count_row['total'];
                             <i class="uil uil-users-alt"></i>
                         </div>
                         <div class="stat-details">
-                            <h3>Pelanggan Baru</h3>
-                            <p class="stat-value"><?= $total_customer ?></p>
-                            <p class="stat-change positive">+5.7% <span>dari bulan lalu</span></p>
+                            <h3>New Costumer</h3>
+                            <p class="stat-value"><?= $total_customers ?></p>                            
                         </div>
                     </div>
                     
@@ -179,115 +255,89 @@ $total_customer = $count_row['total'];
                             <i class="uil uil-cube"></i>
                         </div>
                         <div class="stat-details">
-                            <h3>Total Produk</h3>
-                            <p class="stat-value"><?= $total_products ?></p>
-                            <p class="stat-change negative">-2.3% <span>dari bulan lalu</span></p>
+                            <h3>Total Product</h3>
+                            <p class="stat-value"><?= $total_products ?></p>                            
                         </div>
                     </div>
                 </div>
                 
-                <!-- Recent Orders and Products Section -->
-                <div class="content-grid">
-                    <!-- Recent Orders Table -->
-                    <div class="content-card orders-table">
-                        <div class="card-header">
-                            <h3>Pesanan Terbaru</h3>
-                            <a href="pesanan.php" class="view-all">Lihat Semua</a>
-                        </div>
-                        <div class="card-body">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Pelanggan</th>
-                                        <th>Produk</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>#ORD-001</td>
-                                        <td>Ahmad Rizky</td>
-                                        <td>Celana Jeans (2)</td>
-                                        <td>Rp550.000</td>
-                                        <td><span class="status pending">Menunggu</span></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn view-btn"><i class="uil uil-eye"></i></button>
-                                                <button class="btn edit-btn"><i class="uil uil-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-002</td>
-                                        <td>Siti Aminah</td>
-                                        <td>Dress Casual (1)</td>
-                                        <td>Rp375.000</td>
-                                        <td><span class="status shipped">Dikirim</span></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn view-btn"><i class="uil uil-eye"></i></button>
-                                                <button class="btn edit-btn"><i class="uil uil-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-003</td>
-                                        <td>Budi Santoso</td>
-                                        <td>Sepatu Sneakers (1)</td>
-                                        <td>Rp850.000</td>
-                                        <td><span class="status completed">Selesai</span></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn view-btn"><i class="uil uil-eye"></i></button>
-                                                <button class="btn edit-btn"><i class="uil uil-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-004</td>
-                                        <td>Dewi Anggraini</td>
-                                        <td>Baju Kemeja (3)</td>
-                                        <td>Rp675.000</td>
-                                        <td><span class="status cancelled">Dibatalkan</span></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn view-btn"><i class="uil uil-eye"></i></button>
-                                                <button class="btn edit-btn"><i class="uil uil-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-005</td>
-                                        <td>Rina Wijaya</td>
-                                        <td>Dress Formal (1)</td>
-                                        <td>Rp725.000</td>
-                                        <td><span class="status pending">Menunggu</span></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn view-btn"><i class="uil uil-eye"></i></button>
-                                                <button class="btn edit-btn"><i class="uil uil-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
+             <!-- Replace the Recent Orders Table with Sales Statistics Chart -->
+             <div class="content-card sales-statistics">
+    <div class="card-header">
+        <h3>Sales Statistics</h3>
+        <a href="laporan.php" class="view-all">See Full Reports</a>
+    </div>
+    <div class="card-body">
+        <!-- We'll insert our React component here -->
+        <div id="sales-statistics-chart"></div>
+        <h2>Grafik Penjualan & Pendapatan</h2>
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+</div>
+
+<script>
+    fetch('sales_data.php')
+      .then(res => res.json())
+      .then(data => {
+        const labels = data.map(d => d.name);
+        const sales = data.map(d => d.sales);
+        const revenue = data.map(d => d.revenue);
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Jumlah Transaksi',
+                data: sales,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Pendapatan (Rp)',
+                data: revenue,
+                backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      });
+  </script>                    
                     <!-- Product Management -->
                     <div class="content-card product-management">
                         <div class="card-header">
-                            <h3>Produk Terbaru</h3>
-                            <a href="produk.php" class="view-all">Kelola Produk</a>
+                            <h3>New Product</h3>
+                            <a href="produk.php" class="view-all">Manage Product</a>
                         </div>
                         <div class="card-body">
                             <div class="product-grid">
                                 <?php
                                 // Ambil 6 produk terbaru
-                                $query = "SELECT * FROM produk ORDER BY id_produk DESC LIMIT 2";
+                                $query = "SELECT 
+    p.*, 
+    COALESCE(SUM(vp.stock), 0) AS total_stok
+FROM 
+    products p
+LEFT JOIN 
+    product_variants vp ON p.id = vp.product_id
+GROUP BY 
+    p.id  ORDER BY id DESC
+    LIMIT 2;
+
+                                                    ";
                                 $result = $kon->query($query);
                                 
                                 if ($result && $result->num_rows > 0) {
@@ -295,15 +345,15 @@ $total_customer = $count_row['total'];
                                 ?>
                                 <div class="product-card">
                                     <div class="product-img">
-                                        <img src="<?= !empty($row['gambar_produk']) ? $row['gambar_produk'] : 'img/placeholder.png' ?>" alt="<?= $row['nama_produk'] ?>">
+                                        <img src="<?= !empty($row['image']) ? $row['image'] : 'img/placeholder.png' ?>" alt="<?= $row['nama_produk'] ?>">
                                     </div>
                                     <div class="product-info">
-                                        <h4><?= $row['nama_produk'] ?></h4>
-                                        <p class="product-price">Rp<?= number_format($row['harga_produk'], 0, ',', '.') ?></p>
-                                        <p class="product-stock">Stok: <?= $row['stock'] ?></p>
+                                        <h4><?= $row['name'] ?></h4>
+                                        <p class="product-price">Rp<?= number_format($row['price'], 0, ',', '.') ?></p>
+                                        <p class="product-stock">Stock: <?= $row['total_stok'] ?></p>
                                         <div class="product-actions">
                                             <button class="btn edit-btn"><i class="uil uil-edit"></i> Edit</button>
-                                            <button class="btn delete-btn"><i class="uil uil-trash-alt"></i> Hapus</button>
+                                            <button class="btn delete-btn"><i class="uil uil-trash-alt"></i> Delete</button>
                                         </div>
                                     </div>
                                 </div>
@@ -313,8 +363,8 @@ $total_customer = $count_row['total'];
                                 ?>
                                 <div class="no-product">
                                     <i class="uil uil-box"></i>
-                                    <p>Belum ada produk ditambahkan</p>
-                                    <a href="tambah-produk.php" class="btn add-btn">Tambah Produk</a>
+                                    <p>Theres no new product</p>
+                                    <a href="tambah-produk.php" class="btn add-btn">Add Product</a>
                                 </div>
                                 <?php
                                 }
@@ -322,7 +372,7 @@ $total_customer = $count_row['total'];
                             </div>
                             <div class="add-product-btn">
                                 <a href="tambah-produk.php" class="btn primary-btn">
-                                    <i class="uil uil-plus"></i> Tambah Produk Baru
+                                    <i class="uil uil-plus"></i> Add New Produk
                                 </a>
                             </div>
                         </div>

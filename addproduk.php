@@ -30,8 +30,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     // Insert product into database
-    $insert_query = "INSERT INTO produk (nama_produk, harga_produk, stok_produk, kategori_id, deskripsi_produk, gambar_produk) 
-                    VALUES ('$nama_produk', '$harga_produk', '$stok_produk', '$kategori_id', '$deskripsi_produk', '$gambar_produk')";
+    $created_at = date("Y-m-d H:i:s");
+    $insert_query = "INSERT INTO produk (nama, harga, gambar, id_kategori, created_at) 
+                    VALUES ('$nama_produk', '$harga_produk', '$gambar_produk', '$kategori_id', '$created_at')";
+    
     
     if ($kon->query($insert_query) === TRUE) {
         // Redirect to product management page
@@ -43,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get categories for dropdown
-$kategori_query = "SELECT * FROM kategori ORDER BY nama";
+$kategori_query = "SELECT * FROM categories ORDER BY name";
 $kategori_result = $kon->query($kategori_query);
 ?>
 
@@ -274,16 +276,16 @@ $kategori_result = $kon->query($kategori_query);
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="nama_produk">Nama Produk</label>
-                                    <input type="text" id="nama_produk" name="nama_produk" class="form-control" required>
+                                    <input type="text" id="nama_produk" name="nama" class="form-control" required>
                                 </div>
                                 
                                 <div class="form-group">
                                     <label for="kategori_id">Kategori</label>
-                                    <select id="kategori_id" name="kategori_id" class="form-control" required>
+                                    <select id="kategori_id" name="id_kategori" class="form-control" required>
                                         <option value="">Pilih Kategori</option>
                                         <?php if($kategori_result && $kategori_result->num_rows > 0): ?>
                                             <?php while($row = $kategori_result->fetch_assoc()): ?>
-                                                <option value="<?= $row['id_kategori'] ?>"><?= $row['nama_kategori'] ?></option>
+                                                <option value="<?= $row['id'] ?>"><?= $row['nama'] ?></option>
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <option value="1">Celana</option>
@@ -298,7 +300,7 @@ $kategori_result = $kon->query($kategori_query);
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="harga_produk">Harga (Rp)</label>
-                                    <input type="number" id="harga_produk" name="harga_produk" class="form-control" required>
+                                    <input type="number" id="harga_produk" name="harga" class="form-control" required>
                                 </div>
                                 
                                 <div class="form-group">
