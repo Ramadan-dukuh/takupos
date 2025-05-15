@@ -65,6 +65,16 @@ function getSalesData($kon) {
         'sales' => $last_month_data['sales'] ?? 0,
         'revenue' => $last_month_data['revenue'] ?? 0
     );
+
+    $data['Total'] = array(
+        'sales' => $data['Today']['sales'] + $data['Yesterday']['sales'] + $data['Last Week']['sales'] + $data['Last Month']['sales'],
+        'revenue' => $data['Today']['revenue'] + $data['Yesterday']['revenue'] + $data['Last Week']['revenue'] + $data['Last Month']['revenue']
+    );
+
+    $jumlah_transaksi = "SELECT COUNT(*) as total FROM transactions";
+    $jumlah_transaksi_result = $kon->query($jumlah_transaksi);
+    $jumlah_transaksi_row = $jumlah_transaksi_result->fetch_assoc();
+    $data['Total']['transactions'] = $jumlah_transaksi_row['total'];
     
     return $data;
 }

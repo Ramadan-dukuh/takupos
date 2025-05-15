@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Insert product into database
     $created_at = date("Y-m-d H:i:s");
-    $insert_query = "INSERT INTO produk (nama, harga, gambar, id_kategori, created_at) 
+    $insert_query = "INSERT INTO products (name, price, image, category_id, created_at) 
                     VALUES ('$nama_produk', '$harga_produk', '$gambar_produk', '$kategori_id', '$created_at')";
     
     
@@ -198,9 +198,9 @@ $kategori_result = $kon->query($kategori_query);
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                    <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item">
@@ -285,7 +285,7 @@ $kategori_result = $kon->query($kategori_query);
                                         <option value="">Pilih Kategori</option>
                                         <?php if($kategori_result && $kategori_result->num_rows > 0): ?>
                                             <?php while($row = $kategori_result->fetch_assoc()): ?>
-                                                <option value="<?= $row['id'] ?>"><?= $row['nama'] ?></option>
+                                                <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <option value="1">Celana</option>

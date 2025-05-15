@@ -86,6 +86,29 @@ $result = $kon->query($query);
             text-decoration: none;
             margin: 0 5px;            
         }
+        .product-card {
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .product-img {
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+        }
+        .product-img img {
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-img img {
+            transform: scale(1.05);
+        }
+        .product-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
     </style>
 </head>
 <body>
@@ -123,9 +146,9 @@ $result = $kon->query($query);
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Customers</span>
+                  <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item">
@@ -240,21 +263,24 @@ $result = $kon->query($query);
                             <div class="product-management-grid">
                                 <?php while($row = $result->fetch_assoc()): ?>
                                 <div class="product-card">
-                                    <div class="product-img">
-                                        <img src="<?= !empty($row['image']) ? $row['image'] : 'img/bg.png' ?>" alt="<?= $row['product_name'] ?>">
-                                    </div>
-                                    <div class="product-info">
-                                        <h4><?= $row['name'] ?></h4>
-                                        <p class="product-price">Rp<?= number_format($row['price'], 0, ',', '.') ?></p>
-                                        <p class="product-stock">Stok: <?= isset($row['stock']) ? $row['stock'] : 0 ?></p>
-                                        <div class="product-actions">
-                                            <a href="edit-produk.php?id=<?= $row['id'] ?>" class="btn edit-btn">
-                                                <i class="uil uil-edit"></i> Edit
-                                            </a>
-                                            <a href="produk.php?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
-                                                <i class="uil uil-trash-alt"></i> Delete
-                                            </a>
+                                    <!-- Make the product clickable -->
+                                    <a href="product_detail.php?id=<?= $row['id'] ?>" class="product-link">
+                                        <div class="product-img">
+                                            <img src="<?= !empty($row['image']) ? $row['image'] : 'img/bg.png' ?>" alt="<?= $row['name'] ?>">
                                         </div>
+                                        <div class="product-info">
+                                            <h4><?= $row['name'] ?></h4>
+                                            <p class="product-price">Rp<?= number_format($row['price'], 0, ',', '.') ?></p>
+                                            <p class="product-stock">Stok: <?= isset($row['stock']) ? $row['stock'] : 0 ?></p>
+                                        </div>
+                                    </a>
+                                    <div class="product-actions">
+                                        <a href="editproduk.php?id=<?= $row['id'] ?>" class="btn edit-btn">
+                                            <i class="uil uil-edit"></i> Edit
+                                        </a>
+                                        <a href="produk.php?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                                            <i class="uil uil-trash-alt"></i> Delete
+                                        </a>
                                     </div>
                                 </div>
                                 <?php endwhile; ?>
@@ -302,5 +328,25 @@ $result = $kon->query($query);
             </div>
         </main>
     </div>
+
+    <script>
+        // Add click event for product cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const productCards = document.querySelectorAll('.product-card');
+            
+            productCards.forEach(card => {
+                const productLink = card.querySelector('.product-link');
+                const editBtn = card.querySelector('.edit-btn');
+                const deleteBtn = card.querySelector('.delete-btn');
+                
+                card.addEventListener('click', function(e) {
+                    // Only navigate if the click is not on buttons
+                    if (!editBtn.contains(e.target) && !deleteBtn.contains(e.target)) {
+                        window.location.href = productLink.href;
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

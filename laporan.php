@@ -222,12 +222,12 @@ $summary = array();
     <title>Laporan - Fashion24</title>
     <style>
         .chart-container {
-            background-color: white;
+            width: 100%;
+            margin: auto;
+            background: #fff;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px var(--shadow-color);
-            height: 350px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         
         .sales-summary {
@@ -387,6 +387,26 @@ $summary = array();
             font-size: 12px;
             color: var(--text-light);
         }
+
+        .summary {
+      margin-top: 30px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      border-left: 4px solid #3498db;
+    }
+    .summary h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .data-label {
+      font-weight: bold;
+    }
         
         /* Responsive date picker for mobile */
         @media screen and (max-width: 768px) {
@@ -452,9 +472,9 @@ $summary = array();
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                    <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item active">
@@ -532,161 +552,159 @@ $summary = array();
                     <a href="?export=csv&type=<?= $report_type ?>&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>" class="btn secondary-btn export-btn">
                         <i class="uil uil-download-alt"></i> Export CSV
                     </a>
-                </form>
-                
-                <!-- Sales Summary -->
-                <div class="sales-summary">
-                    <div class="summary-card">
-                        <div class="label">Total Pendapatan</div>
-                        <div class="value">Rp <?= number_format($summary['total_revenue'], 0, ',', '.') ?></div>
-                    </div>
-                    
-                    <div class="summary-card">
-                        <div class="label">Jumlah Pesanan</div>
-                        <div class="value"><?= $summary['order_count'] ?></div>
-                    </div>
-                    
-                    <div class="summary-card">
-                        <div class="label">Rata-rata Order</div>
-                        <div class="value">Rp <?= number_format($summary['average_order'], 0, ',', '.') ?></div>
-                    </div>
-                    
-                    <div class="summary-card">
-                        <div class="label">Pelanggan Aktif</div>
-                        <div class="value"><?= $summary['customer_count'] ?></div>
-                    </div>
-                </div>
+                </form>                            
                 
                 <!-- Charts -->
                 <div class="content-grid">
                     <!-- Revenue Chart -->
                     <div class="chart-container">
-                        <h3>Pendapatan</h3>
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                    
-                    <!-- Product Performance -->
-                    <div class="data-summary">
-                        <h3>Produk Terlaris</h3>
-                        <div class="top-products">
-                            <?php if (count($top_products) > 0): ?>
-                                <?php $rank = 1; foreach ($top_products as $product): ?>
-                                <div class="product-rank">
-                                    <div class="rank-number"><?= $rank ?></div>
-                                    <div class="product-info">
-                                        <div class="product-name"><?= $product['nama_produk'] ?></div>
-                                        <div class="product-sold"><?= $product['total_sold'] ?> unit terjual</div>
-                                    </div>
-                                </div>
-                                <?php $rank++; endforeach; ?>
-                            <?php else: ?>
-                                <div class="no-data">
-                                    <p>Belum ada data produk terjual pada periode ini</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Report Data -->
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>
-                            <?php 
-                            if ($report_type == 'sales') echo 'Data Penjualan';
-                            elseif ($report_type == 'products') echo 'Performa Produk';
-                            elseif ($report_type == 'pelanggan') echo 'Performa Pelanggan';
-                            ?>
-                        </h3>
-                    </div>
-                    
-                    <div class="card-body">
-                        <?php if (count($report_data) > 0): ?>
-                            <div class="responsive-table">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <?php if ($report_type == 'sales'): ?>
-                                                <th>ID Pesanan</th>
-                                                <th>Tanggal</th>
-                                                <th>Pelanggan</th>
-                                                <th>Total</th>
-                                                <th>Metode Pembayaran</th>
-                                                <th>Status</th>
-                                            <?php elseif ($report_type == 'products'): ?>
-                                                <th>ID</th>
-                                                <th>Produk</th>
-                                                <th>Kategori</th>
-                                                <th>Harga</th>
-                                                <th>Stok</th>
-                                                <th>Total Terjual</th>
-                                                <th>Total Pendapatan</th>
-                                            <?php elseif ($report_type == 'pelanggan'): ?>
-                                                <th>ID</th>
-                                                <th>Pelanggan</th>
-                                                <th>Kontak</th>
-                                                <th>Tanggal Daftar</th>
-                                                <th>Total Pesanan</th>
-                                                <th>Total Belanja</th>
-                                            <?php endif; ?>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($report_data as $item): ?>
-                                            <tr>
-                                                <?php if ($report_type == 'sales'): ?>
-                                                    <td>#<?= $item['id_pesanan'] ?></td>
-                                                    <td><?= date('d/m/Y H:i', strtotime($item['tanggal_pesanan'])) ?></td>
-                                                    <td><?= $item['nama_pelanggan'] ?></td>
-                                                    <td>Rp <?= number_format($item['total'], 0, ',', '.') ?></td>
-                                                    <td><?= $item['metode_pembayaran'] ?></td>
-                                                    <td>
-                                                        <span class="status <?= strtolower($item['status_pesanan']) ?>">
-                                                            <?= $item['status_pesanan'] ?>
-                                                        </span>
-                                                    </td>
-                                                <?php elseif ($report_type == 'products'): ?>
-                                                    <td>#<?= $item['id_produk'] ?></td>
-                                                    <td><?= $item['nama_produk'] ?></td>
-                                                    <td><?= $item['nama_kategori'] ?></td>
-                                                    <td>Rp <?= number_format($item['harga'], 0, ',', '.') ?></td>
-                                                    <td><?= $item['stok'] ?></td>
-                                                    <td><?= $item['total_sold'] ?: '0' ?></td>
-                                                    <td>Rp <?= number_format($item['total_revenue'] ?: 0, 0, ',', '.') ?></td>
-                                                <?php elseif ($report_type == 'pelanggan'): ?>
-                                                    <td>#<?= $item['id_pelanggan'] ?></td>
-                                                    <td>
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <?= strtoupper(substr($item['nama_pelanggan'], 0, 1)) ?>
-                                                            </div>
-                                                            <div>
-                                                                <div class="customer-name"><?= $item['nama_pelanggan'] ?></div>
-                                                                <div class="customer-email"><?= $item['email'] ?></div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td><?= $item['no_telp'] ?></td>
-                                                    <td><?= date('d/m/Y', strtotime($item['created_at'])) ?></td>
-                                                    <td><?= $item['order_count'] ?: '0' ?></td>
-                                                    <td>Rp <?= number_format($item['total_spend'] ?: 0, 0, ',', '.') ?></td>
-                                                <?php endif; ?>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-data">
-                                <i class="uil uil-chart-down"></i>
-                                <p>Tidak ada data untuk ditampilkan pada periode ini</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </main>
+                    <h2>Grafik Penjualan & Pendapatan</h2>
+    <div id="error-message" style="color: red; text-align: center; display: none;">
+      Gagal memuat data. Silakan periksa koneksi database.
     </div>
+    <canvas id="salesChart" height="100"></canvas>
+    
+    <div class="summary">
+      <h3>Ringkasan Penjualan</h3>
+      <div id="summary-data">
+        <p>Memuat data...</p>
+      </div>
+    </div>
+                    <script>
+    // Fungsi untuk memformat angka ke format rupiah
+    function formatRupiah(angka) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(angka);
+    }
+    
+    // Data statis untuk testing jika API gagal
+    const fallbackData = [
+      {name: 'Hari Ini', sales: 10, revenue: 1500000},
+      {name: 'Kemarin', sales: 8, revenue: 1200000},
+      {name: 'Minggu Lalu', sales: 45, revenue: 6700000},
+      {name: 'Bulan Lalu', sales: 180, revenue: 25000000},
+      {name: 'Total', sales: 243, revenue: 34400000}
+    ];
+    
+    function renderChart(data) {
+      const labels = data.map(d => d.name);
+      const sales = data.map(d => d.sales);
+      const revenue = data.map(d => d.revenue);
+      
+      // Render chart
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Jumlah Transaksi',
+              data: sales,
+              backgroundColor: 'rgba(54, 162, 235, 0.6)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Pendapatan (Rp)',
+              data: revenue,
+              backgroundColor: 'rgba(255, 206, 86, 0.6)',
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Jumlah Transaksi'
+              }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Pendapatan (Rp)'
+              },
+              grid: {
+                drawOnChartArea: false
+              }
+            }
+          }
+        }
+      });
+      
+      // Render summary
+      const summaryDiv = document.getElementById('summary-data');
+      let summaryHTML = '';
+      
+      // Find total data
+      const totalData = data.find(item => item.name === 'Total') || 
+                         {name: 'Total', sales: 0, revenue: 0};
+      
+      summaryHTML += `
+        <div class="data-row">
+          <span class="data-label">Total Transaksi:</span>
+          <span>${totalData.sales}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Total Pendapatan:</span>
+          <span>${formatRupiah(totalData.revenue)}</span>
+        </div>
+      `;
+      
+      // Tampilkan juga detail per periode
+      data.forEach(item => {
+        if (item.name !== 'Total') {
+          summaryHTML += `
+            <div class="data-row">
+              <span class="data-label">${item.name}:</span>
+              <span>${item.sales} transaksi (${formatRupiah(item.revenue)})</span>
+            </div>
+          `;
+        }
+      });
+      
+      summaryDiv.innerHTML = summaryHTML;
+    }
+    
+    // Ambil data dari server
+    fetch('sales_data.php')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.length > 0) {
+          renderChart(data);
+        } else {
+          throw new Error('Empty data received');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        document.getElementById('error-message').style.display = 'block';
+        // Gunakan data fallback untuk testing
+        renderChart(fallbackData);
+      });
+  </script>
+
+              
+        </main>
+
     
     <script>
         // Revenue Chart

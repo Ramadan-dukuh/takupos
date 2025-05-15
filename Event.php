@@ -1,82 +1,85 @@
 <?php
 include "koneksi.php";
 
-// Handle Customer Deletion
+// Handle Event Deletion
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
-    $pelanggan_id = $_GET['delete'];
+    $event_id = $_GET['delete'];
     
-    // Check if customer has orders
-    $check_query = "SELECT COUNT(*) as total FROM pesanan WHERE id_pelanggan = $pelanggan_id";
+    // Check if event has associated products
+    $check_query = "SELECT COUNT(*) as total FROM event_product WHERE event_id = $event_id";
     $check_result = $kon->query($check_query);
     $check_row = $check_result->fetch_assoc();
     
     if ($check_row['total'] > 0) {
-        $error_message = "Pelanggan tidak dapat dihapus karena memiliki {$check_row['total']} pesanan.";
+        $error_message = "Event tidak dapat dihapus karena memiliki {$check_row['total']} produk terkait.";
     } else {
-        $delete_query = "DELETE FROM pelanggan WHERE id_pelanggan = $pelanggan_id";
+        $delete_query = "DELETE FROM events WHERE id = $event_id";
         
         if ($kon->query($delete_query) === TRUE) {
-            $success_message = "Data pelanggan berhasil dihapus!";
+            $success_message = "Data event berhasil dihapus!";
         } else {
             $error_message = "Error: " . $kon->error;
         }
     }
 }
 
-// Handle Customer Addition
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_pelanggan'])) {
-    $nama_pelanggan = $_POST['nama_pelanggan'];
-    $email = $_POST['email'];
-    $no_telp = $_POST['no_telp'];
-    $alamat = $_POST['alamat'];
+// Handle Event Addition
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_event'])) {
+    $name = $_POST['name'];
+    $description = $_POST['description'];
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+    $discount_percentage = $_POST['discount_percentage'];
     
-    // Check if email already exists
-    $check_query = "SELECT COUNT(*) as total FROM pelanggan WHERE email = '$email'";
+    // Check if event with same name already exists
+    $check_query = "SELECT COUNT(*) as total FROM events WHERE name = '$name'";
     $check_result = $kon->query($check_query);
     $check_row = $check_result->fetch_assoc();
     
     if ($check_row['total'] > 0) {
-        $error_message = "Email sudah terdaftar. Gunakan email lain.";
+        $error_message = "Nama event sudah ada. Gunakan nama lain.";
     } else {
-        // Add new customer
-        $insert_query = "INSERT INTO pelanggan (nama_pelanggan, email, no_telp, alamat, created_at) 
-                        VALUES ('$nama_pelanggan', '$email', '$no_telp', '$alamat', NOW())";
+        // Add new event
+        $insert_query = "INSERT INTO events (name, description, start_date, end_date, discount_percentage, created_at, updated_at) 
+                        VALUES ('$name', '$description', '$start_date', '$end_date', $discount_percentage, NOW(), NOW())";
         
         if ($kon->query($insert_query) === TRUE) {
-            $success_message = "Data pelanggan berhasil ditambahkan!";
+            $success_message = "Data event berhasil ditambahkan!";
         } else {
             $error_message = "Error: " . $kon->error;
         }
     }
 }
 
-// Handle Customer Edit
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_pelanggan'])) {
-    $pelanggan_id = $_POST['pelanggan_id'];
-    $nama_pelanggan = $_POST['nama_pelanggan'];
-    $email = $_POST['email'];
-    $no_telp = $_POST['no_telp'];
-    $alamat = $_POST['alamat'];
+// Handle Event Edit
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_event'])) {
+    $event_id = $_POST['event_id'];
+    $name = $_POST['name'];
+    $description = $_POST['description'];
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+    $discount_percentage = $_POST['discount_percentage'];
     
-    // Check if email already exists (except current customer)
-    $check_query = "SELECT COUNT(*) as total FROM pelanggan WHERE email = '$email' AND id_pelanggan != $pelanggan_id";
+    // Check if name already exists (except current event)
+    $check_query = "SELECT COUNT(*) as total FROM events WHERE name = '$name' AND id != $event_id";
     $check_result = $kon->query($check_query);
     $check_row = $check_result->fetch_assoc();
     
     if ($check_row['total'] > 0) {
-        $error_message = "Email sudah terdaftar. Gunakan email lain.";
+        $error_message = "Nama event sudah ada. Gunakan nama lain.";
     } else {
-        // Update customer
-        $update_query = "UPDATE pelanggan SET 
-                        nama_pelanggan = '$nama_pelanggan', 
-                        email = '$email', 
-                        no_telp = '$no_telp', 
-                        alamat = '$alamat', 
+        // Update event
+        $update_query = "UPDATE events SET 
+                        name = '$name', 
+                        description = '$description', 
+                        start_date = '$start_date', 
+                        end_date = '$end_date', 
+                        discount_percentage = $discount_percentage, 
                         updated_at = NOW() 
-                        WHERE id_pelanggan = $pelanggan_id";
+                        WHERE id = $event_id";
         
         if ($kon->query($update_query) === TRUE) {
-            $success_message = "Data pelanggan berhasil diperbarui!";
+            $success_message = "Data event berhasil diperbarui!";
         } else {
             $error_message = "Error: " . $kon->error;
         }
@@ -93,36 +96,33 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
 $where_clause = '';
 
 if (!empty($search)) {
-    $where_clause = "WHERE nama_pelanggan LIKE '%$search%' OR email LIKE '%$search%' OR no_telp LIKE '%$search%'";
+    $where_clause = "WHERE name LIKE '%$search%' OR description LIKE '%$search%'";
 }
 
-// Get total customers count for pagination
-// $count_query = "SELECT COUNT(*) as total FROM pelanggan $where_clause";
-// $count_result = $kon->query($count_query);
-// $count_row = $count_result->fetch_assoc();
-// $total_customers = $count_row['total'];
-// $total_pages = ceil($total_customers / $limit);
+// Get total events count for pagination
+$count_query = "SELECT COUNT(*) as total FROM events $where_clause";
+$count_result = $kon->query($count_query);
+$count_row = $count_result->fetch_assoc();
+$total_events = $count_row['total'];
+$total_pages = ceil($total_events / $limit);
 
-// Get customers with pagination
-// $query = "SELECT p.*, 
-//          (SELECT COUNT(*) FROM pesanan WHERE id_pelanggan = p.id_pelanggan) as order_count,
-//          (SELECT SUM(dp.quantity * dp.harga_produk) FROM pesanan o
-//           JOIN detail_pesanan dp ON o.id_pesanan = dp.id_pesanan
-//           WHERE o.id_pelanggan = p.id_pelanggan) as total_spend
-//          FROM pelanggan p 
-//          $where_clause
-//          ORDER BY p.id_pelanggan DESC 
-//          LIMIT $offset, $limit";
-// $result = $kon->query($query);
+// Get events with pagination
+$query = "SELECT e.*, 
+         (SELECT COUNT(*) FROM event_product WHERE event_id = e.id) as product_count
+         FROM events e 
+         $where_clause
+         ORDER BY e.id DESC 
+         LIMIT $offset, $limit";
+$result = $kon->query($query);
 
-// Get customer for edit modal
-$edit_customer = null;
+// Get event for edit modal
+$edit_event = null;
 if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     $edit_id = $_GET['edit'];
-    $edit_query = "SELECT * FROM pelanggan WHERE id_pelanggan = $edit_id";
+    $edit_query = "SELECT * FROM events WHERE id = $edit_id";
     $edit_result = $kon->query($edit_query);
     if ($edit_result && $edit_result->num_rows > 0) {
-        $edit_customer = $edit_result->fetch_assoc();
+        $edit_event = $edit_result->fetch_assoc();
     }
 }
 ?>
@@ -137,9 +137,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="script.js" defer></script>
-    <title>Manajemen Pelanggan - Fashion24</title>
+    <title>Manajemen Event - Fashion24</title>
     <style>
-        .customer-avatar {
+        .event-badge {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -152,17 +152,17 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
             font-size: 16px;
         }
         
-        .customer-info {
+        .event-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
-        .customer-name {
+        .event-name {
             font-weight: 500;
         }
         
-        .customer-email {
+        .event-description {
             font-size: 12px;
             color: #777;
         }
@@ -255,7 +255,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
             color: var(--dark-text);
         }
         
-        .customer-card {
+        .event-card {
             background-color: white;
             border-radius: 10px;
             padding: 20px;
@@ -263,14 +263,14 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
-        .customer-header {
+        .event-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 15px;
         }
         
-        .customer-stats {
+        .event-stats {
             display: flex;
             gap: 20px;
             margin-top: 10px;
@@ -337,9 +337,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                     </a>
                 </li>
                 <li class="menu-item active">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Pelanggan</span>
+                    <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item">
@@ -375,7 +375,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                 <div class="search-box">
                     <form action="" method="GET">
                         <i class="uil uil-search search-icon"></i>
-                        <input type="text" name="search" placeholder="Cari pelanggan..." value="<?= htmlspecialchars($search) ?>" />
+                        <input type="text" name="search" placeholder="Cari Event..." value="<?= htmlspecialchars($search) ?>" />
                     </form>
                 </div>
                 
@@ -393,17 +393,14 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                 </div>
             </nav>
             
-            <!-- Customer Management Content -->
+            <!-- Event Management Content -->
             <div class="dashboard">
                 <div class="page-header">
-                    <h2 class="page-title">Manajemen Pelanggan</h2>
+                    <h2 class="page-title">Manajemen Event</h2>
                     <div class="header-actions">
-                        <button class="btn primary-btn" id="addCustomerBtn">
-                            <i class="uil uil-plus"></i> Tambah Pelanggan
-                        </button>
-                        <a href="laporan.php?type=pelanggan" class="btn secondary-btn">
-                            <i class="uil uil-file-download"></i> Unduh Laporan
-                        </a>
+                        <button class="btn primary-btn" id="addEventBtn">
+                            <i class="uil uil-plus"></i> Tambah Event
+                        </button>                      
                     </div>
                 </div>
                 
@@ -423,9 +420,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                 
                 <div class="content-card">
                     <div class="card-header">
-                        <h3>Daftar Pelanggan</h3>
+                        <h3>Daftar Event</h3>
                         <div class="header-actions">
-                            <span class="product-count"><?= $total_customers ?> Pelanggan</span>
+                            <span class="product-count"><?= $total_events ?> Event</span>
                         </div>
                     </div>
                     
@@ -436,54 +433,50 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Nama Pelanggan</th>
-                                            <th>Kontak</th>
-                                            <th>Alamat</th>
-                                            <th>Total Pesanan</th>
-                                            <th>Total Belanja</th>
-                                            <th>Tanggal Daftar</th>
+                                            <th>Nama Event</th>
+                                            <th>Deskripsi</th>
+                                            <th>Tanggal Mulai</th>
+                                            <th>Tanggal Selesai</th>
+                                            <th>Diskon (%)</th>
+                                            <th>Produk Terkait</th>
+                                            <th>Dibuat Pada</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php while($row = $result->fetch_assoc()): ?>
                                         <tr>
-                                            <td>#<?= $row['id_pelanggan'] ?></td>
+                                            <td>#<?= $row['id'] ?></td>
                                             <td>
-                                                <div class="customer-info">
-                                                    <div class="customer-avatar">
-                                                        <?= strtoupper(substr($row['nama_pelanggan'], 0, 1)) ?>
+                                                <div class="event-info">
+                                                    <div class="event-badge">
+                                                        <?= strtoupper(substr($row['name'], 0, 1)) ?>
                                                     </div>
                                                     <div>
-                                                        <div class="customer-name"><?= $row['nama_pelanggan'] ?></div>
-                                                        <div class="customer-email"><?= $row['email'] ?></div>
+                                                        <div class="event-name"><?= $row['name'] ?></div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td><?= $row['no_telp'] ?></td>
-                                            <td><?= $row['alamat'] ?></td>
+                                            <td><?= $row['description'] ?></td>
+                                            <td><?= date('d M Y', strtotime($row['start_date'])) ?></td>
+                                            <td><?= date('d M Y', strtotime($row['end_date'])) ?></td>
+                                            <td><?= $row['discount_percentage'] ?>%</td>
                                             <td>
-                                                <span class="highlight"><?= $row['order_count'] ?></span>
-                                                <div class="stats-label">Pesanan</div>
-                                            </td>
-                                            <td>
-                                                <span class="highlight">
-                                                    Rp <?= number_format($row['total_spend'] ?? 0, 0, ',', '.') ?>
-                                                </span>
-                                                <div class="stats-label">Total Belanja</div>
+                                                <span class="highlight"><?= $row['product_count'] ?></span>
+                                                <div class="stats-label">Produk</div>
                                             </td>
                                             <td><?= date('d M Y', strtotime($row['created_at'])) ?></td>
                                             <td class="action-buttons">
-                                                <a href="?edit=<?= $row['id_pelanggan'] ?>" class="btn edit-btn">
+                                                <a href="?edit=<?= $row['id'] ?>" class="btn edit-btn">
                                                     <i class="uil uil-edit"></i> Edit
                                                 </a>
-                                                <?php if($row['order_count'] == 0): ?>
-                                                <a href="?delete=<?= $row['id_pelanggan'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus pelanggan ini?');">
+                                                <?php if($row['product_count'] == 0): ?>
+                                                <a href="?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus event ini?');">
                                                     <i class="uil uil-trash"></i> Hapus
                                                 </a>
                                                 <?php else: ?>
-                                                <a href="pesanan.php?search=<?= $row['nama_pelanggan'] ?>" class="btn view-btn">
-                                                    <i class="uil uil-eye"></i> Lihat Pesanan
+                                                <a href="event_product.php?event_id=<?= $row['id'] ?>" class="btn view-btn">
+                                                    <i class="uil uil-eye"></i> Lihat Produk
                                                 </a>
                                                 <?php endif; ?>
                                             </td>
@@ -520,14 +513,14 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                             
                         <?php else: ?>
                             <div class="no-data">
-                                <i class="uil uil-users-alt"></i>
+                                <i class="uil uil-calendar-alt"></i>
                                 <?php if(!empty($search)): ?>
-                                <p>Tidak ditemukan pelanggan yang sesuai dengan pencarian</p>
-                                <a href="pelanggan.php" class="btn secondary-btn">Reset Pencarian</a>
+                                <p>Tidak ditemukan event yang sesuai dengan pencarian</p>
+                                <a href="event.php" class="btn secondary-btn">Reset Pencarian</a>
                                 <?php else: ?>
-                                <p>Belum ada data pelanggan</p>
-                                <button class="btn primary-btn" id="addCustomerBtnEmpty">
-                                    <i class="uil uil-plus"></i> Tambah Pelanggan Pertama
+                                <p>Belum ada data Event</p>
+                                <button class="btn primary-btn" id="addEventBtnEmpty">
+                                    <i class="uil uil-plus"></i> Tambah Event Pertama
                                 </button>
                                 <?php endif; ?>
                             </div>
@@ -538,78 +531,88 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         </main>
     </div>
     
-    <!-- Add Customer Modal -->
-    <div class="modal" id="addCustomerModal">
+    <!-- Add Event Modal -->
+    <div class="modal" id="addEventModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Tambah Pelanggan Baru</h3>
+                <h3>Tambah Event Baru</h3>
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form action="" method="POST">
                     <div class="form-group">
-                        <label for="nama_pelanggan">Nama Pelanggan</label>
-                        <input type="text" id="nama_pelanggan" name="nama_pelanggan" class="form-control" required>
+                        <label for="name">Nama Event</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" class="form-control" required>
+                        <label for="description">Deskripsi</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label for="no_telp">No. Telepon</label>
-                        <input type="text" id="no_telp" name="no_telp" class="form-control" required>
+                        <label for="start_date">Tanggal Mulai</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="alamat">Alamat</label>
-                        <textarea id="alamat" name="alamat" class="form-control" rows="3" required></textarea>
+                        <label for="end_date">Tanggal Selesai</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="discount_percentage">Persentase Diskon</label>
+                        <input type="number" id="discount_percentage" name="discount_percentage" class="form-control" min="0" max="100" required>
                     </div>
                     
                     <div class="btn-container">
-                        <input type="hidden" name="add_pelanggan" value="1">
+                        <input type="hidden" name="add_event" value="1">
                         <button type="button" class="btn secondary-btn cancel-modal">Batal</button>
-                        <button type="submit" class="btn primary-btn">Tambah Pelanggan</button>
+                        <button type="submit" class="btn primary-btn">Tambah Event</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- Edit Customer Modal -->
-    <?php if($edit_customer): ?>
-    <div class="modal" id="editCustomerModal" style="display: flex;">
+    <!-- Edit Event Modal -->
+    <?php if($edit_event): ?>
+    <div class="modal" id="editEventModal" style="display: flex;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Edit Data Pelanggan</h3>
+                <h3>Edit Data Event</h3>
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form action="" method="POST">
                     <div class="form-group">
-                        <label for="edit_nama_pelanggan">Nama Pelanggan</label>
-                        <input type="text" id="edit_nama_pelanggan" name="nama_pelanggan" class="form-control" value="<?= htmlspecialchars($edit_customer['nama_pelanggan']) ?>" required>
+                        <label for="edit_name">Nama Event</label>
+                        <input type="text" id="edit_name" name="name" class="form-control" value="<?= htmlspecialchars($edit_event['name']) ?>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit_email">Email</label>
-                        <input type="email" id="edit_email" name="email" class="form-control" value="<?= htmlspecialchars($edit_customer['email']) ?>" required>
+                        <label for="edit_description">Deskripsi</label>
+                        <textarea id="edit_description" name="description" class="form-control" rows="3" required><?= htmlspecialchars($edit_event['description']) ?></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit_no_telp">No. Telepon</label>
-                        <input type="text" id="edit_no_telp" name="no_telp" class="form-control" value="<?= htmlspecialchars($edit_customer['no_telp']) ?>" required>
+                        <label for="edit_start_date">Tanggal Mulai</label>
+                        <input type="date" id="edit_start_date" name="start_date" class="form-control" value="<?= date('Y-m-d', strtotime($edit_event['start_date'])) ?>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit_alamat">Alamat</label>
-                        <textarea id="edit_alamat" name="alamat" class="form-control" rows="3" required><?= htmlspecialchars($edit_customer['alamat']) ?></textarea>
+                        <label for="edit_end_date">Tanggal Selesai</label>
+                        <input type="date" id="edit_end_date" name="end_date" class="form-control" value="<?= date('Y-m-d', strtotime($edit_event['end_date'])) ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_discount_percentage">Persentase Diskon</label>
+                        <input type="number" id="edit_discount_percentage" name="discount_percentage" class="form-control" min="0" max="100" value="<?= $edit_event['discount_percentage'] ?>" required>
                     </div>
                     
                     <div class="btn-container">
-                        <input type="hidden" name="pelanggan_id" value="<?= $edit_customer['id_pelanggan'] ?>">
-                        <input type="hidden" name="edit_pelanggan" value="1">
+                        <input type="hidden" name="event_id" value="<?= $edit_event['id'] ?>">
+                        <input type="hidden" name="edit_event" value="1">
                         <button type="button" class="btn secondary-btn cancel-modal">Batal</button>
                         <button type="submit" class="btn primary-btn">Perbarui Data</button>
                     </div>
@@ -621,34 +624,34 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     
     <script>
         // Modal functionality
-        const addCustomerModal = document.getElementById('addCustomerModal');
-        const editCustomerModal = document.getElementById('editCustomerModal');
-        const addCustomerBtn = document.getElementById('addCustomerBtn');
-        const addCustomerBtnEmpty = document.getElementById('addCustomerBtnEmpty');
+        const addEventModal = document.getElementById('addEventModal');
+        const editEventModal = document.getElementById('editEventModal');
+        const addEventBtn = document.getElementById('addEventBtn');
+        const addEventBtnEmpty = document.getElementById('addEventBtnEmpty');
         const closeModalButtons = document.querySelectorAll('.close-modal');
         const cancelButtons = document.querySelectorAll('.cancel-modal');
         
-        // Show add customer modal
-        if (addCustomerBtn) {
-            addCustomerBtn.addEventListener('click', function() {
-                addCustomerModal.style.display = 'flex';
+        // Show add event modal
+        if (addEventBtn) {
+            addEventBtn.addEventListener('click', function() {
+                addEventModal.style.display = 'flex';
             });
         }
         
-        if (addCustomerBtnEmpty) {
-            addCustomerBtnEmpty.addEventListener('click', function() {
-                addCustomerModal.style.display = 'flex';
+        if (addEventBtnEmpty) {
+            addEventBtnEmpty.addEventListener('click', function() {
+                addEventModal.style.display = 'flex';
             });
         }
         
         // Close modals
         closeModalButtons.forEach(button => {
             button.addEventListener('click', function() {
-                if (addCustomerModal) addCustomerModal.style.display = 'none';
-                if (editCustomerModal) editCustomerModal.style.display = 'none';
+                if (addEventModal) addEventModal.style.display = 'none';
+                if (editEventModal) editEventModal.style.display = 'none';
                 // Redirect to remove edit parameter
                 if (window.location.href.includes('edit=')) {
-                    window.location.href = 'pelanggan.php' + (window.location.href.includes('search=') ? 
+                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
                     '?search=<?= urlencode($search) ?>' : '');
                 }
             });
@@ -656,11 +659,11 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         
         cancelButtons.forEach(button => {
             button.addEventListener('click', function() {
-                if (addCustomerModal) addCustomerModal.style.display = 'none';
-                if (editCustomerModal) editCustomerModal.style.display = 'none';
+                if (addEventModal) addEventModal.style.display = 'none';
+                if (editEventModal) editEventModal.style.display = 'none';
                 // Redirect to remove edit parameter
                 if (window.location.href.includes('edit=')) {
-                    window.location.href = 'pelanggan.php' + (window.location.href.includes('search=') ? 
+                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
                     '?search=<?= urlencode($search) ?>' : '');
                 }
             });
@@ -668,14 +671,14 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         
         // Close modal when clicking outside
         window.addEventListener('click', function(event) {
-            if (event.target === addCustomerModal) {
-                addCustomerModal.style.display = 'none';
+            if (event.target === addEventModal) {
+                addEventModal.style.display = 'none';
             }
-            if (event.target === editCustomerModal) {
-                editCustomerModal.style.display = 'none';
+            if (event.target === editEventModal) {
+                editEventModal.style.display = 'none';
                 // Redirect to remove edit parameter
                 if (window.location.href.includes('edit=')) {
-                    window.location.href = 'pelanggan.php' + (window.location.href.includes('search=') ? 
+                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
                     '?search=<?= urlencode($search) ?>' : '');
                 }
             }

@@ -161,9 +161,9 @@ if ($result && $result->num_rows > 0) {
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Customers</span>
+                    <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item">
@@ -269,53 +269,155 @@ if ($result && $result->num_rows > 0) {
     </div>
     <div class="card-body">
         <!-- We'll insert our React component here -->
+    
+
         <div id="sales-statistics-chart"></div>
         <h2>Grafik Penjualan & Pendapatan</h2>
-        <canvas id="salesChart" height="100"></canvas>
+    <!-- <div id="error-message" style="color: red; text-align: center; display: none;">
+      Gagal memuat data. Silakan periksa koneksi database.
+    </div> -->
+    <canvas id="salesChart" height="100"></canvas>
+    
+    <!-- <div class="summary">
+      <h3>Ringkasan Penjualan</h3>
+      <div id="summary-data">
+        <p>Memuat data...</p>
+      </div> -->
+    </div>
     </div>
 </div>
 
 <script>
-    fetch('sales_data.php')
-      .then(res => res.json())
-      .then(data => {
-        const labels = data.map(d => d.name);
-        const sales = data.map(d => d.sales);
-        const revenue = data.map(d => d.revenue);
-
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: 'Jumlah Transaksi',
-                data: sales,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-              },
-              {
-                label: 'Pendapatan (Rp)',
-                data: revenue,
-                backgroundColor: 'rgba(255, 206, 86, 0.6)',
-                borderColor: 'rgba(255, 206, 86, 1)',
-                borderWidth: 1
+    // Fungsi untuk memformat angka ke format rupiah
+    function formatRupiah(angka) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(angka);
+    }
+    
+    // Data statis untuk testing jika API gagal
+    const fallbackData = [
+      {name: 'Hari Ini', sales: 10, revenue: 1500000},
+      {name: 'Kemarin', sales: 8, revenue: 1200000},
+      {name: 'Minggu Lalu', sales: 45, revenue: 6700000},
+      {name: 'Bulan Lalu', sales: 180, revenue: 25000000},
+      {name: 'Total', sales: 243, revenue: 34400000}
+    ];
+    
+    function renderChart(data) {
+      const labels = data.map(d => d.name);
+      const sales = data.map(d => d.sales);
+      const revenue = data.map(d => d.revenue);
+      
+      // Render chart
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Jumlah Transaksi',
+              data: sales,
+              backgroundColor: 'rgba(54, 162, 235, 0.6)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Pendapatan (Rp)',
+              data: revenue,
+              backgroundColor: 'rgba(255, 206, 86, 0.6)',
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Jumlah Transaksi'
               }
-            ]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Pendapatan (Rp)'
+              },
+              grid: {
+                drawOnChartArea: false
               }
             }
           }
-        });
+        }
       });
-  </script>                    
+      
+      // Render summary
+      const summaryDiv = document.getElementById('summary-data');
+      let summaryHTML = '';
+      
+      // Find total data
+      const totalData = data.find(item => item.name === 'Total') || 
+                         {name: 'Total', sales: 0, revenue: 0};
+      
+      summaryHTML += `
+        <div class="data-row">
+          <span class="data-label">Total Transaksi:</span>
+          <span>${totalData.sales}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Total Pendapatan:</span>
+          <span>${formatRupiah(totalData.revenue)}</span>
+        </div>
+      `;
+      
+      // Tampilkan juga detail per periode
+      data.forEach(item => {
+        if (item.name !== 'Total') {
+          summaryHTML += `
+            <div class="data-row">
+              <span class="data-label">${item.name}:</span>
+              <span>${item.sales} transaksi (${formatRupiah(item.revenue)})</span>
+            </div>
+          `;
+        }
+      });
+      
+      summaryDiv.innerHTML = summaryHTML;
+    }
+    
+    // Ambil data dari server
+    fetch('sales_data.php')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.length > 0) {
+          renderChart(data);
+        } else {
+          throw new Error('Empty data received');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        document.getElementById('error-message').style.display = 'block';
+        // Gunakan data fallback untuk testing
+        renderChart(fallbackData);
+      });
+  </script>
                     <!-- Product Management -->
                     <div class="content-card product-management">
                         <div class="card-header">
@@ -335,7 +437,7 @@ LEFT JOIN
     product_variants vp ON p.id = vp.product_id
 GROUP BY 
     p.id  ORDER BY id DESC
-    LIMIT 2;
+    LIMIT 5;
 
                                                     ";
                                 $result = $kon->query($query);
@@ -344,8 +446,9 @@ GROUP BY
                                     while($row = $result->fetch_assoc()) {
                                 ?>
                                 <div class="product-card">
+                                        <a href="product_detail.php?id=<?= $row['id'] ?>" class="product-link">
                                     <div class="product-img">
-                                        <img src="<?= !empty($row['image']) ? $row['image'] : 'img/placeholder.png' ?>" alt="<?= $row['nama_produk'] ?>">
+                                        <img src="<?= !empty($row['image']) ? $row['image'] : 'img/bg.png' ?>" alt="<?= $row['nama_produk'] ?>">
                                     </div>
                                     <div class="product-info">
                                         <h4><?= $row['name'] ?></h4>
@@ -356,6 +459,7 @@ GROUP BY
                                             <button class="btn delete-btn"><i class="uil uil-trash-alt"></i> Delete</button>
                                         </div>
                                     </div>
+                                    </a>
                                 </div>
                                 <?php
                                     }

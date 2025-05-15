@@ -1,129 +1,76 @@
 <?php
 include "koneksi.php";
 
-// Handle Order Status Update
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_status'])) {
-    $order_id = intval($_POST['order_id']);
-    $order_status = $kon->real_escape_string($_POST['order_status']);
-    
-    $update_query = "UPDATE transactions SET status = ?, 
-                    updated_at = NOW() WHERE id = ?";
-    
-    $stmt = $kon->prepare($update_query);
-    $stmt->bind_param("si", $order_status, $order_id);
-    
-    if ($stmt->execute()) {
-        $success_message = "Order status successfully updated!";
-    } else {
-        $error_message = "Error: " . $kon->error;
-    }
-    $stmt->close();
-}
-
-// Pagination setup
-$limit = 10; // Items per page
+// Pagination
+$limit = 10;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
-// Filter functionality
-$status_filter = isset($_GET['status']) ? $kon->real_escape_string($_GET['status']) : '';
-$date_filter = isset($_GET['date']) ? $kon->real_escape_string($_GET['date']) : '';
-$search = isset($_GET['search']) ? $kon->real_escape_string($_GET['search']) : '';
+// Filter pencarian
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$search_column = isset($_GET['search_column']) ? $_GET['search_column'] : '';
 
-// Build query conditions
-$conditions = [];
-$params = [];
-$types = "";
+// Filter waktu
+$date_filter = isset($_GET['date']) ? $_GET['date'] : '';
 
-if (!empty($status_filter)) {
-    $conditions[] = "t.status = ?";
-    $params[] = $status_filter;
-    $types .= "s";
-}
+// Bangun WHERE clause
+$where_clauses = [];
 
+// Filter waktu
 if (!empty($date_filter)) {
     if ($date_filter == 'today') {
-        $conditions[] = "DATE(t.created_at) = CURDATE()";
+        $where_clauses[] = "DATE(t.created_at) = CURDATE()";
     } elseif ($date_filter == 'yesterday') {
-        $conditions[] = "DATE(t.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
+        $where_clauses[] = "DATE(t.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
     } elseif ($date_filter == 'week') {
-        $conditions[] = "t.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+        $where_clauses[] = "t.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
     } elseif ($date_filter == 'month') {
-        $conditions[] = "t.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+        $where_clauses[] = "t.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
     }
 }
 
-if (!empty($search)) {
-    $conditions[] = "(t.id LIKE ? OR u.username LIKE ? OR t.payment_type LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $types .= "sss";
+// Filter pencarian kolom tertentu
+$allowed_columns = ['id', 'user_id', 'payment_type'];
+if (!empty($search) && in_array($search_column, $allowed_columns)) {
+    $where_clauses[] = "t.$search_column LIKE '%" . $kon->real_escape_string($search) . "%'";
 }
 
-$where_clause = !empty($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
-
-// Get status counts for filter badges
-// $status_counts = [];
-// $status_query = "SELECT status, COUNT(*) as count FROM transactions GROUP BY status";
-// $status_result = $kon->query($status_query);
-// if ($status_result) {
-//     while ($row = $status_result->fetch_assoc()) {
-//         $status_counts[$row['status']] = $row['count'];
-//     }
-// }
-
-// Get total orders count for pagination
-$count_query = "SELECT COUNT(*) as total FROM transactions t
-                LEFT JOIN users u ON t.user_id = u.id
-                $where_clause";
-
-if (!empty($params)) {
-    $stmt = $kon->prepare($count_query);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $count_result = $stmt->get_result();
-    $count_row = $count_result->fetch_assoc();
-    $stmt->close();
-} else {
-    $count_result = $kon->query($count_query);
-    $count_row = $count_result->fetch_assoc();
+// Gabungkan semua kondisi WHERE
+$where_sql = '';
+if (!empty($where_clauses)) {
+    $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
 }
 
-$total_orders = $count_row['total'];
-$total_pages = ceil($total_orders / $limit);
+// Hitung total data
+$count_query = "SELECT COUNT(*) as total FROM transactions t $where_sql";
+$count_result = $kon->query($count_query);
+$total_row = $count_result->fetch_assoc();
+$total_data = $total_row['total'];
+$total_pages = ceil($total_data / $limit);
 
-// Get orders with pagination
-// $query = "SELECT 
-//     t.*, 
-//     u.username as customer_name,
-//     u.id as user_id,
-//     (
-//         SELECT SUM(td.quantity * pv.price)
-//         FROM transaction_details td
-//         JOIN product_variants pv ON td.product_variant_id = pv.id
-//         WHERE td.transaction_id = t.id
-//     ) AS total_amount
-// FROM transactions t
-// LEFT JOIN users u ON t.user_id = u.id
-// $where_clause
-// ORDER BY t.created_at DESC
-// LIMIT ?, ?";
+// Ambil data transaksi dengan detail
+$query = "
+    SELECT 
+        t.id AS transaction_id,
+        t.user_id,
+        t.payment_type,
+        t.created_at,
+        t.updated_at,
+        (
+            SELECT SUM(td.quantity)
+            FROM transaction_details td
+            WHERE td.transaction_id = t.id
+        ) AS total_items
+    FROM transactions t
+    $where_sql
+    ORDER BY t.created_at DESC
+    LIMIT ?, ?
+";
 
-// $params[] = $offset;
-// $params[] = $limit;
-// $types .= "ii";
-
-// $stmt = $kon->prepare($query);
-// $stmt->bind_param($types, ...$params);
-// $stmt->execute();
-// $result = $stmt->get_result();
-
-// Get total orders count
-$total_count_query = "SELECT COUNT(*) as count FROM transaction_details";
-$total_count_result = $kon->query($total_count_query);
-$total_count_row = $total_count_result->fetch_assoc();
-$total_count = $total_count_row['count'];
+$stmt = $kon->prepare($query);
+$stmt->bind_param("ii", $offset, $limit);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -297,9 +244,9 @@ $total_count = $total_count_row['count'];
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="pelanggan.php">
-                        <i class="uil uil-users-alt"></i>
-                        <span>Customers</span>
+                 <a href="event.php">
+                        <i class="uil uil-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </li>
                 <li class="menu-item">
@@ -361,169 +308,89 @@ $total_count = $total_count_row['count'];
             
             <!-- Order Management Content -->
             <div class="dashboard">
-                <div class="page-header">
-                    <h2 class="page-title">Order Management</h2>
-                    <div class="header-actions">
-                        <a href="reports.php?type=orders" class="btn secondary-btn">
-                            <i class="uil uil-file-download"></i> Download Report
-                        </a>
-                    </div>
-                </div>
-                
-                <?php if(isset($success_message)): ?>
-                <div class="alert success">
-                    <i class="uil uil-check-circle"></i>
-                    <?= htmlspecialchars($success_message) ?>
-                </div>
-                <?php endif; ?>
-                
-                <?php if(isset($error_message)): ?>
-                <div class="alert error">
-                    <i class="uil uil-exclamation-triangle"></i>
-                    <?= htmlspecialchars($error_message) ?>
-                </div>
-                <?php endif; ?>
-                
-                <div class="filter-tabs">
-                    <a href="orders.php" class="filter-tab <?= empty($status_filter) ? 'active' : '' ?>">
-                        All <span class="count"><?= $total_count ?></span>
-                    </a>
-                    <a href="?status=pending<?= !empty($search) ? '&search='.$search : '' ?><?= !empty($date_filter) ? '&date='.$date_filter : '' ?>" 
-                       class="filter-tab <?= $status_filter === 'pending' ? 'active' : '' ?>">
-                        <i class="uil uil-clock"></i> Pending 
-                        <span class="count"><?= isset($status_counts['pending']) ? $status_counts['pending'] : 0 ?></span>
-                    </a>
-                    <a href="?status=processing<?= !empty($search) ? '&search='.$search : '' ?><?= !empty($date_filter) ? '&date='.$date_filter : '' ?>" 
-                       class="filter-tab <?= $status_filter === 'processing' ? 'active' : '' ?>">
-                        <i class="uil uil-process"></i> Processing 
-                        <span class="count"><?= isset($status_counts['processing']) ? $status_counts['processing'] : 0 ?></span>
-                    </a>
-                    <a href="?status=shipped<?= !empty($search) ? '&search='.$search : '' ?><?= !empty($date_filter) ? '&date='.$date_filter : '' ?>" 
-                       class="filter-tab <?= $status_filter === 'shipped' ? 'active' : '' ?>">
-                        <i class="uil uil-truck"></i> Shipped 
-                        <span class="count"><?= isset($status_counts['shipped']) ? $status_counts['shipped'] : 0 ?></span>
-                    </a>
-                    <a href="?status=delivered<?= !empty($search) ? '&search='.$search : '' ?><?= !empty($date_filter) ? '&date='.$date_filter : '' ?>" 
-                       class="filter-tab <?= $status_filter === 'delivered' ? 'active' : '' ?>">
-                        <i class="uil uil-check-circle"></i> Delivered 
-                        <span class="count"><?= isset($status_counts['delivered']) ? $status_counts['delivered'] : 0 ?></span>
-                    </a>
-                    <a href="?status=cancelled<?= !empty($search) ? '&search='.$search : '' ?><?= !empty($date_filter) ? '&date='.$date_filter : '' ?>" 
-                       class="filter-tab <?= $status_filter === 'cancelled' ? 'active' : '' ?>">
-                        <i class="uil uil-times-circle"></i> Cancelled 
-                        <span class="count"><?= isset($status_counts['cancelled']) ? $status_counts['cancelled'] : 0 ?></span>
-                    </a>
-                </div>
-                
-                <div class="date-filters">
-                    <a href="?<?= !empty($status_filter) ? 'status='.$status_filter.'&' : '' ?><?= !empty($search) ? 'search='.$search.'&' : '' ?>date=today" 
-                       class="date-filter <?= $date_filter === 'today' ? 'active' : '' ?>">
-                        Today
-                    </a>
-                    <a href="?<?= !empty($status_filter) ? 'status='.$status_filter.'&' : '' ?><?= !empty($search) ? 'search='.$search.'&' : '' ?>date=yesterday" 
-                       class="date-filter <?= $date_filter === 'yesterday' ? 'active' : '' ?>">
-                        Yesterday
-                    </a>
-                    <a href="?<?= !empty($status_filter) ? 'status='.$status_filter.'&' : '' ?><?= !empty($search) ? 'search='.$search.'&' : '' ?>date=week" 
-                       class="date-filter <?= $date_filter === 'week' ? 'active' : '' ?>">
-                        Last 7 Days
-                    </a>
-                    <a href="?<?= !empty($status_filter) ? 'status='.$status_filter.'&' : '' ?><?= !empty($search) ? 'search='.$search.'&' : '' ?>date=month" 
-                       class="date-filter <?= $date_filter === 'month' ? 'active' : '' ?>">
-                        Last 30 Days
-                    </a>
-                    <?php if(!empty($date_filter)): ?>
-                    <a href="?<?= !empty($status_filter) ? 'status='.$status_filter : '' ?><?= !empty($search) ? (!empty($status_filter) ? '&' : '').'search='.$search : '' ?>" 
-                       class="date-filter">
-                        Reset Filter
-                    </a>
-                    <?php endif; ?>
-                </div>
-                
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>Order List</h3>
-                        <div class="header-actions">
-                            <span class="product-count"><?= $total_orders ?> Orders</span>
-                        </div>
-                    </div>
-                    
-                    <div class="card-body">
-                        <?php if ($result && $result->num_rows > 0): ?>
-                            <div class="responsive-table">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Customer</th>
-                                            <th>Total</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while($row = $result->fetch_assoc()): ?>
-                                        <tr>
-                                            <td>#<?= $row['id'] ?></td>
-                                            <td>
-                                                <div class="customer-info">
-                                                    <div class="customer-avatar">
-                                                        <?= strtoupper(substr($row['customer_name'] ?? 'U', 0, 1)) ?>
-                                                    </div>
-                                                    <div>
-                                                        <div><?= htmlspecialchars($row['customer_name'] ?? 'Unknown') ?></div>
-                                                        <div class="text-muted small"><?= htmlspecialchars($row['user_id']) ?></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="price">
-                                                    $ <?= number_format($row['total_amount'] ?? 0, 2, '.', ',') ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                $status = $row['status'] ?? 'pending';
-                                                $status_icon = '';
-                                                switch($status) {
-                                                    case 'pending':
-                                                        $status_icon = '<i class="uil uil-clock"></i>';
-                                                        break;
-                                                    case 'processing':
-                                                        $status_icon = '<i class="uil uil-process"></i>';
-                                                        break;
-                                                    case 'shipped':
-                                                        $status_icon = '<i class="uil uil-truck"></i>';
-                                                        break;
-                                                    case 'delivered':
-                                                        $status_icon = '<i class="uil uil-check-circle"></i>';
-                                                        break;
-                                                    case 'cancelled':
-                                                        $status_icon = '<i class="uil uil-times-circle"></i>';
-                                                        break;
-                                                }
-                                                ?>
-                                                <span class="status-badge <?= $status ?>">
-                                                    <?= $status_icon ?>
-                                                    <?= ucfirst($status) ?>
-                                                </span>
-                                            </td>
-                                            <td><?= date('d M Y H:i', strtotime($row['created_at'])) ?></td>
-                                            <td class="action-buttons">
-                                                <a href="order_details.php?id=<?= $row['id'] ?>" class="btn view-btn">
-                                                    <i class="uil uil-eye"></i> Details
-                                                </a>
-                                                <button class="btn edit-btn change-status-btn" data-id="<?= $row['id'] ?>" data-status="<?= $status ?>">
-                                                    <i class="uil uil-edit"></i> Status
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
+    <div class="page-header">
+        <h2 class="page-title">Order Management</h2>
+        <div class="header-actions">
+       <a href="download_report.php?search=<?= urlencode($search) ?>&search_column=<?= urlencode($search_column) ?>&date=<?= urlencode($date_filter) ?>" class="btn secondary-btn">
+    <i class="uil uil-file-download"></i> Download Report
+</a>
+
+        </div>
+    </div>
+
+    <?php if(isset($success_message)): ?>
+    <div class="alert success">
+        <i class="uil uil-check-circle"></i>
+        <?= htmlspecialchars($success_message) ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if(isset($error_message)): ?>
+    <div class="alert error">
+        <i class="uil uil-exclamation-triangle"></i>
+        <?= htmlspecialchars($error_message) ?>
+    </div>
+    <?php endif; ?>
+
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Transaction List</h3>
+        </div>
+
+        <!-- Form Pencarian dan Filter -->
+        <form method="GET" style="margin-bottom: 10px;" class="filter-form">            
+            <select name="search_column">
+                <option value="">Kolom </option>
+                <option value="id" <?= $search_column == 'id' ? 'selected' : '' ?>>ID Transaksi</option>
+                <option value="user_id" <?= $search_column == 'user_id' ? 'selected' : '' ?>>User ID</option>
+                <option value="payment_type" <?= $search_column == 'payment_type' ? 'selected' : '' ?>>Metode Bayar</option>
+            </select>
+            <select name="date" class="date-filter">
+                <option value="">Tanggal </option>
+                <option value="today" <?= $date_filter == 'today' ? 'selected' : '' ?>>Hari Ini</option>
+                <option value="yesterday" <?= $date_filter == 'yesterday' ? 'selected' : '' ?>>Kemarin</option>
+                <option value="week" <?= $date_filter == 'week' ? 'selected' : '' ?>>Minggu Ini</option>
+                <option value="month" <?= $date_filter == 'month' ? 'selected' : '' ?>>Bulan Ini</option>
+            </select>
+            <button type="submit" class="btn">Filter</button>
+        </form>
+
+        <!-- Tabel Data Transaksi -->
+        <div class="responsive-table">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID Transaksi</th>
+                        <th>User ID</th>
+                        <th>Metode Pembayaran</th>
+                        <th>Total Item</th>
+                        <th>Tanggal Transaksi</th>
+                        <th>Update Terakhir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= $row['transaction_id'] ?></td>
+                        <td><?= $row['user_id'] ?></td>
+                        <td><?= $row['payment_type'] ?></td>
+                        <td><?= $row['total_items'] ?? 0 ?></td>
+                        <td><?= $row['created_at'] ?></td>
+                        <td><?= $row['updated_at'] ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Navigasi Halaman -->
+<div style="margin-top: 10px;">
+    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&search_column=<?= $search_column ?>&date=<?= $date_filter ?>"><?= $i ?></a>
+    <?php endfor; ?>
+</div>
                             <!-- Pagination -->
                             <?php if($total_pages > 1): ?>
                             <div class="pagination">
@@ -549,17 +416,7 @@ $total_count = $total_count_row['count'];
                             </div>
                             <?php endif; ?>
                             
-                        <?php else: ?>
-                            <div class="no-data">
-                                <i class="uil uil-shopping-cart"></i>
-                                <?php if(!empty($search) || !empty($status_filter) || !empty($date_filter)): ?>
-                                <p>No orders found matching your filters</p>
-                                <a href="orders.php" class="btn secondary-btn">Reset Filters</a>
-                                <?php else: ?>
-                                <p>No orders found</p>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                
                     </div>
                 </div>
             </div>
