@@ -633,6 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addEventBtn.addEventListener('click', function() {
       console.log("Add button clicked");
       addEventModal.style.display = 'flex';
+    addEventModal.style.opacity = '1';
     });
   }
   
