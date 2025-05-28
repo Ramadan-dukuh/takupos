@@ -312,7 +312,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
             </div>
             
             <ul class="sidebar-menu">
-                <li class="menu-item">
+               <li class="menu-item">
                     <a href="dashboard.php">
                         <i class="uil uil-dashboard"></i>
                         <span>Dashboard</span>
@@ -321,19 +321,19 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                 <li class="menu-item">
                     <a href="produk.php">
                         <i class="uil uil-shopping-bag"></i>
-                        <span>Produk</span>
+                        <span>Products</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="kategori.php">
                         <i class="uil uil-tag-alt"></i>
-                        <span>Kategori</span>
+                        <span>Categories</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pesanan.php">
                         <i class="uil uil-shopping-cart"></i>
-                        <span>Pesanan</span>
+                        <span>Orders</span>
                     </a>
                 </li>
                 <li class="menu-item active">
@@ -345,13 +345,13 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                 <li class="menu-item">
                     <a href="laporan.php">
                         <i class="uil uil-chart"></i>
-                        <span>Laporan</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pengaturan.php">
                         <i class="uil uil-setting"></i>
-                        <span>Pengaturan</span>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>
@@ -466,13 +466,10 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                                                 <div class="stats-label">Produk</div>
                                             </td>
                                             <td><?= date('d M Y', strtotime($row['created_at'])) ?></td>
-                                            <td class="action-buttons">
-                                                <a href="?edit=<?= $row['id'] ?>" class="btn edit-btn">
-                                                    <i class="uil uil-edit"></i> Edit
-                                                </a>
+                                            <td class="action-buttons">                                               
                                                 <?php if($row['product_count'] == 0): ?>
-                                                <a href="?delete=<?= $row['id'] ?>" class="btn delete-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus event ini?');">
-                                                    <i class="uil uil-trash"></i> Hapus
+                                                <a href="">
+                                                    <i class="uil uil-plus"></i> Tambah Produk
                                                 </a>
                                                 <?php else: ?>
                                                 <a href="event_product.php?event_id=<?= $row['id'] ?>" class="btn view-btn">
@@ -622,80 +619,39 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     </div>
     <?php endif; ?>
     
-    <script>
-        // Modal functionality
-        const addEventModal = document.getElementById('addEventModal');
-        const editEventModal = document.getElementById('editEventModal');
-        const addEventBtn = document.getElementById('addEventBtn');
-        const addEventBtnEmpty = document.getElementById('addEventBtnEmpty');
-        const closeModalButtons = document.querySelectorAll('.close-modal');
-        const cancelButtons = document.querySelectorAll('.cancel-modal');
-        
-        // Show add event modal
-        if (addEventBtn) {
-            addEventBtn.addEventListener('click', function() {
-                addEventModal.style.display = 'flex';
-            });
-        }
-        
-        if (addEventBtnEmpty) {
-            addEventBtnEmpty.addEventListener('click', function() {
-                addEventModal.style.display = 'flex';
-            });
-        }
-        
-        // Close modals
-        closeModalButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                if (addEventModal) addEventModal.style.display = 'none';
-                if (editEventModal) editEventModal.style.display = 'none';
-                // Redirect to remove edit parameter
-                if (window.location.href.includes('edit=')) {
-                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
-                    '?search=<?= urlencode($search) ?>' : '');
-                }
-            });
-        });
-        
-        cancelButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                if (addEventModal) addEventModal.style.display = 'none';
-                if (editEventModal) editEventModal.style.display = 'none';
-                // Redirect to remove edit parameter
-                if (window.location.href.includes('edit=')) {
-                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
-                    '?search=<?= urlencode($search) ?>' : '');
-                }
-            });
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target === addEventModal) {
-                addEventModal.style.display = 'none';
-            }
-            if (event.target === editEventModal) {
-                editEventModal.style.display = 'none';
-                // Redirect to remove edit parameter
-                if (window.location.href.includes('edit=')) {
-                    window.location.href = 'event.php' + (window.location.href.includes('search=') ? 
-                    '?search=<?= urlencode($search) ?>' : '');
-                }
-            }
-        });
-        
-        // Alert auto-hide
-        const alerts = document.querySelectorAll('.alert');
-        if (alerts.length > 0) {
-            setTimeout(() => {
-                alerts.forEach(alert => {
-                    alert.style.opacity = '0';
-                    setTimeout(() => {
-                        alert.style.display = 'none';
-                    }, 300);
-                });
-            }, 3000);
-        }
-    </script>
+   <script>
+// Ganti kode JavaScript Anda dengan ini di bagian bawah file
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM fully loaded"); // Debugging
+  
+  // Handle Add Event Modal
+  const addEventBtn = document.getElementById('addEventBtn');
+  const addEventBtnEmpty = document.getElementById('addEventBtnEmpty');
+  const addEventModal = document.getElementById('addEventModal');
+  
+  if (addEventBtn) {
+    addEventBtn.addEventListener('click', function() {
+      console.log("Add button clicked");
+      addEventModal.style.display = 'flex';
+    });
+  }
+  
+  if (addEventBtnEmpty) {
+    addEventBtnEmpty.addEventListener('click', function() {
+      console.log("Empty button clicked");
+      addEventModal.style.display = 'flex';
+    });
+  }
+  
+  // Close modal
+  const closeButtons = document.querySelectorAll('.close-modal, .cancel-modal');
+  closeButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      addEventModal.style.display = 'none';
+      if (editEventModal) editEventModal.style.display = 'none';
+    });
+  });
+});
+</script>
 </body>
 </html>

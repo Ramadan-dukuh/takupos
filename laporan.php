@@ -447,7 +447,7 @@ $summary = array();
             </div>
             
             <ul class="sidebar-menu">
-                <li class="menu-item">
+               <li class="menu-item">
                     <a href="dashboard.php">
                         <i class="uil uil-dashboard"></i>
                         <span>Dashboard</span>
@@ -456,22 +456,22 @@ $summary = array();
                 <li class="menu-item">
                     <a href="produk.php">
                         <i class="uil uil-shopping-bag"></i>
-                        <span>Produk</span>
+                        <span>Products</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="kategori.php">
                         <i class="uil uil-tag-alt"></i>
-                        <span>Kategori</span>
+                        <span>Categories</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pesanan.php">
                         <i class="uil uil-shopping-cart"></i>
-                        <span>Pesanan</span>
+                        <span>Orders</span>
                     </a>
                 </li>
-                <li class="menu-item">
+                <li class="menu-item ">
                     <a href="event.php">
                         <i class="uil uil-calendar-alt"></i>
                         <span>Events</span>
@@ -480,13 +480,13 @@ $summary = array();
                 <li class="menu-item active">
                     <a href="laporan.php">
                         <i class="uil uil-chart"></i>
-                        <span>Laporan</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="pengaturan.php">
                         <i class="uil uil-setting"></i>
-                        <span>Pengaturan</span>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>

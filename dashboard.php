@@ -453,11 +453,7 @@ GROUP BY
                                     <div class="product-info">
                                         <h4><?= $row['name'] ?></h4>
                                         <p class="product-price">Rp<?= number_format($row['price'], 0, ',', '.') ?></p>
-                                        <p class="product-stock">Stock: <?= $row['total_stok'] ?></p>
-                                        <div class="product-actions">
-                                            <button class="btn edit-btn"><i class="uil uil-edit"></i> Edit</button>
-                                            <button class="btn delete-btn"><i class="uil uil-trash-alt"></i> Delete</button>
-                                        </div>
+                                        <p class="product-stock">Stock: <?= $row['total_stok'] ?></p>                                        
                                     </div>
                                     </a>
                                 </div>
@@ -468,14 +464,14 @@ GROUP BY
                                 <div class="no-product">
                                     <i class="uil uil-box"></i>
                                     <p>Theres no new product</p>
-                                    <a href="tambah-produk.php" class="btn add-btn">Add Product</a>
+                                    <a href="addproduk.php" class="btn add-btn">Add Product</a>
                                 </div>
                                 <?php
                                 }
                                 ?>
                             </div>
                             <div class="add-product-btn">
-                                <a href="tambah-produk.php" class="btn primary-btn">
+                                <a href="addproduk.php" class="btn primary-btn">
                                     <i class="uil uil-plus"></i> Add New Produk
                                 </a>
                             </div>

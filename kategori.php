@@ -153,7 +153,7 @@ $result = $kon->query($query);
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="even.php">
+                    <a href="event.php">
                         <i class="uil uil-calendar-alt"></i>
                         <span>Events</span>
                     </a>

@@ -390,7 +390,7 @@ echo "<script>var barcode = '" . htmlspecialchars($first_barcode, ENT_QUOTES) . 
             JsBarcode('#result', barcode, {
                 format: "code128",
                 lineColor: "#000",
-                width: 3,
+                width: 2,
                 height: 100
             });
         }

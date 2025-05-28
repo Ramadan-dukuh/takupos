@@ -5,9 +5,8 @@ include "koneksi.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nama_produk = $_POST['nama'];
     $harga_produk = $_POST['harga'];
-    $stok_produk = $_POST['stok_produk'];
     $kategori_id = $_POST['id_kategori'];
-    $deskripsi_produk = $_POST['deskripsi_produk'];
+    
     
     // Handle file upload
     $gambar_produk = '';
@@ -29,18 +28,72 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
-    // Insert product into database
-    $created_at = date("Y-m-d H:i:s");
-    $insert_query = "INSERT INTO products (name, price, image, category_id, created_at) 
-                    VALUES ('$nama_produk', '$harga_produk', '$gambar_produk', '$kategori_id', '$created_at')";
+    // Start transaction
+    $kon->begin_transaction();
     
-    
-    if ($kon->query($insert_query) === TRUE) {
+    try {
+        // Insert product into database
+        $created_at = date("Y-m-d H:i:s");
+        $insert_query = "INSERT INTO products (name, price, image, category_id, created_at) 
+                VALUES (?, ?, ?, ?, ?)";
+
+
+        
+        $stmt = $kon->prepare($insert_query);
+$stmt->bind_param("sdsss", $nama_produk, $harga_produk, $gambar_produk, $kategori_id, $created_at);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error inserting product: " . $stmt->error);
+        }
+        
+        $product_id = $kon->insert_id;
+        
+        // Insert product variants
+        if (isset($_POST['variants']) && !empty($_POST['variants'])) {
+            $variants = $_POST['variants'];
+            
+            $variant_query = "INSERT INTO product_variants (product_id, size, color, barcode, stock, created_at, updated_at) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $variant_stmt = $kon->prepare($variant_query);
+            
+            foreach ($variants as $variant) {
+                if (!empty($variant['size']) || !empty($variant['color'])) {
+                    $size = !empty($variant['size']) ? $variant['size'] : '';
+                    $color = !empty($variant['color']) ? $variant['color'] : '';
+                    $barcode = !empty($variant['barcode']) ? $variant['barcode'] : '';
+                    $stock = !empty($variant['stock']) ? intval($variant['stock']) : 0;
+                    $updated_at = $created_at;
+                    
+                    $variant_stmt->bind_param("isssiss", 
+                        $product_id, 
+                        $size, 
+                        $color, 
+                        $barcode, 
+                        $stock, 
+                        $created_at,
+                        $updated_at
+                    );
+                    
+                    if (!$variant_stmt->execute()) {
+                        throw new Exception("Error inserting variant: " . $variant_stmt->error);
+                    }
+                }
+            }
+            $variant_stmt->close();
+        }
+        
+        // Commit transaction
+        $kon->commit();
+        $stmt->close();
+        
         // Redirect to product management page
         header("Location: produk.php?success=1");
         exit();
-    } else {
-        $error_message = "Error: " . $kon->error;
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $kon->rollback();
+        $error_message = $e->getMessage();
     }
 }
 
@@ -160,6 +213,115 @@ $kategori_result = $kon->query($kategori_query);
         .alert.error {
             background-color: rgba(220, 53, 69, 0.1);
             color: #dc3545;
+        }
+        
+        /* Variant Styles */
+        .variants-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .variants-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .variants-header h4 {
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .add-variant-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .add-variant-btn:hover {
+            background-color: #5a1010;
+        }
+        
+        .variant-item {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .variant-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 100px auto;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .variant-row .form-group {
+            margin-bottom: 0;
+        }
+        
+        .remove-variant-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-variant-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .variant-examples {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .barcode-generate-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .barcode-generate-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        @media (max-width: 768px) {
+            .variant-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .remove-variant-btn {
+                justify-self: end;
+            }
         }
     </style>
 </head>
@@ -297,16 +459,9 @@ $kategori_result = $kon->query($kategori_query);
                                 </div>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="harga_produk">Harga (Rp)</label>
-                                    <input type="number" id="harga_produk" name="harga" class="form-control" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="stok_produk">Stok</label>
-                                    <input type="number" id="stok_produk" name="stok_produk" class="form-control" required>
-                                </div>
+                            <div class="form-group">
+                                <label for="harga_produk">Harga Produk (Rp)</label>
+                                <input type="number" id="harga_produk" name="harga" class="form-control" required>
                             </div>
                             
                             <div class="form-group">
@@ -317,12 +472,31 @@ $kategori_result = $kon->query($kategori_query);
                                         <p>Pilih gambar produk</p>
                                     </div>
                                 </div>
-                                <input type="file" id="gambar_produk" name="gambar_produk" class="form-control" accept="image/*">
+                                <input type="file" id="gambar_produk" name="gambar" class="form-control" accept="image/*">
                             </div>
                             
-                            <div class="form-group">
+                            <!-- <div class="form-group">
                                 <label for="deskripsi_produk">Deskripsi Produk</label>
                                 <textarea id="deskripsi_produk" name="deskripsi_produk" class="form-control"></textarea>
+                            </div> -->
+                            
+                            <!-- Product Variants Section -->
+                            <div class="variants-section">
+                                <div class="variants-header">
+                                    <h4>Variant Produk</h4>
+                                    <button type="button" class="add-variant-btn" onclick="addVariant()">
+                                        <i class="uil uil-plus"></i>
+                                        Tambah Variant
+                                    </button>
+                                </div>
+                                
+                                <div id="variantsContainer">
+                                    <!-- Variants will be added here dynamically -->
+                                </div>
+                                
+                                <small class="variant-examples">
+                                    <strong>Contoh:</strong> Size: S, M, L, XL | Color: Merah, Biru, Hijau, Putih
+                                </small>
                             </div>
                             
                             <div class="btn-container">
@@ -337,6 +511,8 @@ $kategori_result = $kon->query($kategori_query);
     </div>
     
     <script>
+        let variantCount = 0;
+        
         // Image preview script
         const imageInput = document.getElementById('gambar_produk');
         const imagePreview = document.getElementById('imagePreview');
@@ -373,6 +549,75 @@ $kategori_result = $kon->query($kategori_query);
                     imagePreview.removeChild(imagePreview.firstChild);
                 }
             }
+        });
+        
+        // Generate random barcode
+        function generateBarcode() {
+            return 'PRD' + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 3).toUpperCase();
+        }
+        
+        // Variant management functions
+        function addVariant() {
+            const container = document.getElementById('variantsContainer');
+            const randomBarcode = generateBarcode();
+            
+            const variantHtml = `
+                <div class="variant-item" id="variant-${variantCount}">
+                    <div class="variant-row">
+                        <div class="form-group">
+                            <label>Ukuran (Size)</label>
+                            <select name="variants[${variantCount}][size]" class="form-control">
+                                <option value="">Pilih Ukuran</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                                <option value="XXXL">XXXL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Warna (Color)</label>
+                            <input type="text" name="variants[${variantCount}][color]" class="form-control" placeholder="Contoh: Merah, Biru">
+                        </div>
+                        <div class="form-group">
+                            <label>Barcode</label>
+                            <input type="text" name="variants[${variantCount}][barcode]" class="form-control" value="${randomBarcode}" readonly>
+                            <button type="button" class="barcode-generate-btn" onclick="generateNewBarcode(${variantCount})">Generate Baru</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Stok</label>
+                            <input type="number" name="variants[${variantCount}][stock]" class="form-control" placeholder="0" min="0" required>
+                        </div>
+                        <button type="button" class="remove-variant-btn" onclick="removeVariant(${variantCount})">
+                            <i class="uil uil-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', variantHtml);
+            variantCount++;
+        }
+        
+        function removeVariant(id) {
+            const variant = document.getElementById(`variant-${id}`);
+            if (variant) {
+                variant.remove();
+            }
+        }
+        
+        function generateNewBarcode(id) {
+            const barcodeInput = document.querySelector(`input[name="variants[${id}][barcode]"]`);
+            if (barcodeInput) {
+                barcodeInput.value = generateBarcode();
+            }
+        }
+        
+        // Add initial variant on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            addVariant();
         });
     </script>
 </body>
