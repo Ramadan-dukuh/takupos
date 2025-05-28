@@ -468,8 +468,8 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
                                             <td><?= date('d M Y', strtotime($row['created_at'])) ?></td>
                                             <td class="action-buttons">                                               
                                                 <?php if($row['product_count'] == 0): ?>
-                                                <a href="">
-                                                    <i class="uil uil-plus"></i> Tambah Produk
+                                             <a href="event_product.php?event_id=<?= $row['id'] ?>" class="btn view-btn">
+                                                    <i class="uil uil-eye"></i> Lihat Produk
                                                 </a>
                                                 <?php else: ?>
                                                 <a href="event_product.php?event_id=<?= $row['id'] ?>" class="btn view-btn">

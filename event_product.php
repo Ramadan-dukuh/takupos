@@ -728,6 +728,7 @@ $available_result = $kon->query($available_query);
         if (addProductBtn) {
             addProductBtn.addEventListener('click', function() {
                 addProductModal.style.display = 'flex';
+                addProductModal.style.opacity = '1';
             });
         }
         

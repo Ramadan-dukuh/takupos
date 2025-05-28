@@ -394,6 +394,7 @@ $result = $kon->query($query);
             showAddCategoryModal.addEventListener('click', function() {
                 addCategoryModal.style.display = 'flex';
                 addCategoryModal.style.zIndex = '100';
+                addCategoryModal.style.opacity = '1';
             });
         }
         
