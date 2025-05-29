@@ -192,5 +192,6 @@
         renderChart(fallbackData);
       });
   </script>
+  <p>test</p>
 </body>
 </html>
