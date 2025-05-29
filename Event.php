@@ -641,6 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addEventBtnEmpty.addEventListener('click', function() {
       console.log("Empty button clicked");
       addEventModal.style.display = 'flex';
+      addEventModal.style.opacitiy = '1';
     });
   }
   
